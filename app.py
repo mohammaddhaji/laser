@@ -1881,12 +1881,12 @@ class MainWin(QMainWindow):
             width = 0
             newWidth = 330
 
-        self.animation4 = QPropertyAnimation(self.resetCounterFrame, b"maximumWidth")
-        self.animation4.setDuration(500)
-        self.animation4.setStartValue(width)
-        self.animation4.setEndValue(newWidth)
-        self.animation4.setEasingCurve(QEasingCurve.InOutQuart)
-        self.animation4.start()
+        self.animation3 = QPropertyAnimation(self.resetCounterFrame, b"maximumWidth")
+        self.animation3.setDuration(500)
+        self.animation3.setStartValue(width)
+        self.animation3.setEndValue(newWidth)
+        self.animation3.setEasingCurve(QEasingCurve.InOutQuart)
+        self.animation3.start()
 
     def showResetCounterConfirm(self, i):
         width = self.resetCounterMsgFrame.width()
@@ -1925,13 +1925,13 @@ class MainWin(QMainWindow):
             height = 0
             newHeight = 300
 
-        self.animation3 = QPropertyAnimation(self.po, b'maximumHeight')
-        self.animation3.setDuration(500)
-        self.animation3.setStartValue(height)
-        self.animation3.setEndValue(newHeight)
-        self.animation3.setEasingCurve(QEasingCurve.InOutQuart)
-        self.animation3.valueChanged.connect(lambda value: self.po.setFixedHeight(value))
-        self.animation3.start()
+        self.animation5 = QPropertyAnimation(self.po, b'maximumHeight')
+        self.animation5.setDuration(500)
+        self.animation5.setStartValue(height)
+        self.animation5.setEndValue(newHeight)
+        self.animation5.setEasingCurve(QEasingCurve.InOutQuart)
+        self.animation5.valueChanged.connect(lambda value: self.po.setFixedHeight(value))
+        self.animation5.start()
 
     def btnHwSettingClicked(self):
         self.showHwPassInput('show')
@@ -2335,23 +2335,23 @@ class MainWin(QMainWindow):
         self.lblMsg.setVisible(True)
         self.effect = QGraphicsOpacityEffect()
         self.lblMsg.setGraphicsEffect(self.effect)
-        self.animationMsg = QPropertyAnimation(self.effect, b"opacity")
-        self.animationMsg.setDuration(timespan)
-        self.animationMsg.setStartValue(0)
-        self.animationMsg.setEndValue(1)
-        self.animationMsg.start()
+        self.animation6 = QPropertyAnimation(self.effect, b"opacity")
+        self.animation6.setDuration(timespan)
+        self.animation6.setStartValue(0)
+        self.animation6.setEndValue(1)
+        self.animation6.start()
 
     def clearMessageLabel(self):
         self.messageTimer.stop()
         self.effect = QGraphicsOpacityEffect()
         self.lblMsg.setGraphicsEffect(self.effect)
-        self.animation = QPropertyAnimation(self.effect, b"opacity")
-        self.animation.setDuration(400)
-        self.animation.setStartValue(1)
-        self.animation.setEndValue(0)
-        self.animation.finished.connect(self.lblMsg.clear)
-        self.animation.finished.connect(lambda: self.lblMsg.setVisible(False))
-        self.animation.start()
+        self.animation7 = QPropertyAnimation(self.effect, b"opacity")
+        self.animation7.setDuration(400)
+        self.animation7.setStartValue(1)
+        self.animation7.setEndValue(0)
+        self.animation7.finished.connect(self.lblMsg.clear)
+        self.animation7.finished.connect(lambda: self.lblMsg.setVisible(False))
+        self.animation7.start()
 
     def changeLanguage(self, lang):
         global app
