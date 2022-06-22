@@ -1739,21 +1739,23 @@ class MainWin(QMainWindow):
             widget = QApplication.focusWidget()
             lang = 2 if self.farsi else 0
 
-            if letter() == 'backspace':
-                widget.backspace() 
+            if hasattr(widget, 'insert'):
+                
+                if letter() == 'backspace':
+                    widget.backspace() 
 
-            elif len(letter()) == 3: # then it's a letter
-                widget.insert(letter()[lang])
+                elif len(letter()) == 3: # then it's a letter
+                    widget.insert(letter()[lang])
 
-            elif len(letter()) == 1: # then it's a number
-                widget.insert(letter())
+                elif len(letter()) == 1: # then it's a number
+                    widget.insert(letter())
 
-            elif letter() == 'enter':
-                if widget is not None:
-                    modifiers = Qt.KeyboardModifiers()    
-                    for evType in (QEvent.KeyPress, QEvent.KeyRelease):
-                        event = QKeyEvent(evType, Qt.Key_Return, modifiers)
-                        QApplication.postEvent(widget, event)
+                elif letter() == 'enter':
+                    if widget is not None:
+                        modifiers = Qt.KeyboardModifiers()    
+                        for evType in (QEvent.KeyPress, QEvent.KeyRelease):
+                            event = QKeyEvent(evType, Qt.Key_Return, modifiers)
+                            QApplication.postEvent(widget, event)
 
         return wrapper
 
