@@ -229,7 +229,8 @@ def loadConfigs():
         return configs
 
     except Exception as e:
-        print(e)
+        print('Config file is invalid.')
+        log('Config', 'Config file is invalid.\n')
         exit(1)
 
 
