@@ -505,6 +505,7 @@ class MainWin(QMainWindow):
         self.txtNumberSubmit.returnPressed.connect(self.submitNewUser)
         self.txtHwPass.returnPressed.connect(self.loginHardwareSettings)
         self.txtOwnerInfo.returnPressed.connect(self.showSplash)
+        self.txtResetCounterPass.returnPressed.connect(self.checkResetCounterPass)
         
         for txt in self.findChildren(LineEdit):
             if isinstance(txt, LineEdit):
@@ -1954,6 +1955,7 @@ class MainWin(QMainWindow):
             self.resetTotalShot()
             self.showResetCounterPassInput('hide')
             self.txtResetCounterPass.clear()
+            self.setKeyboard('hide')
         else:
             self.txtResetCounterPass.setStyleSheet(TXT_RESET_COUNTER_WRONG_PASS)
             self.txtResetCounterPass.setFocus()
