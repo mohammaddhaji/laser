@@ -2089,8 +2089,10 @@ class MainWin(QMainWindow):
         sessions = self.userInfo.sessions
         totalSessions = len(sessions)+1 if len(sessions) > 0 else 0
         self.userInfoTable.setRowCount(totalSessions)
+        totalCellColor = QColor(245, 151, 125)
+        dateColor = QColor(213, 140, 255)
         for sn in sessions:
-            date = TableWidgetItem(str(toJalali(sessions[sn]['date']).date()))
+            date = TableWidgetItem(str(toJalali(sessions[sn]['date']).date()), dateColor)
             face = TableWidgetItem(str(sessions[sn]['face']))
             armpit = TableWidgetItem(str(sessions[sn]['armpit']))
             arm = TableWidgetItem(str(sessions[sn]['arm']))
@@ -2098,7 +2100,7 @@ class MainWin(QMainWindow):
             bikini = TableWidgetItem(str(sessions[sn]['bikini']))
             leg = TableWidgetItem(str(sessions[sn]['leg']))
             dateShots = [shot for key, shot in sessions[sn].items() if key != 'date']
-            totalRow = TableWidgetItem(str(sum(dateShots)))
+            totalRow = TableWidgetItem(str(sum(dateShots)), totalCellColor)
 
             self.userInfoTable.setItem(sn - 1, 0, date)
             self.userInfoTable.setItem(sn - 1, 1, face)
@@ -2110,12 +2112,7 @@ class MainWin(QMainWindow):
             self.userInfoTable.setItem(sn - 1, 7, totalRow)
 
         lastRow = len(sessions)
-        text = TEXT['total'][self.langIndex]
-        lastRowTitle = TableWidgetItem(text)
-        font = QFont('Arial', 18)
-        font.setBold(True)
-        lastRowTitle.setFont(font)
-        self.userInfoTable.setItem(lastRow, 0, lastRowTitle)
+        self.userInfoTable.setItem(lastRow, 0, TableWidgetItem(''))
 
         bodyParts = self.userInfo.shot.keys()
         totalColumn = dict.fromkeys(bodyParts, 0)
@@ -2123,14 +2120,14 @@ class MainWin(QMainWindow):
             for part in bodyParts:
                 totalColumn[part] += shots[part] 
 
-        face = TableWidgetItem(str(totalColumn['face']))
-        armpit = TableWidgetItem(str(totalColumn['armpit']))
-        arm = TableWidgetItem(str(totalColumn['arm']))
-        body = TableWidgetItem(str(totalColumn['body']))
-        bikini = TableWidgetItem(str(totalColumn['bikini']))
-        leg = TableWidgetItem(str(totalColumn['leg']))
+        face = TableWidgetItem(str(totalColumn['face']), totalCellColor)
+        armpit = TableWidgetItem(str(totalColumn['armpit']), totalCellColor)
+        arm = TableWidgetItem(str(totalColumn['arm']), totalCellColor)
+        body = TableWidgetItem(str(totalColumn['body']), totalCellColor)
+        bikini = TableWidgetItem(str(totalColumn['bikini']), totalCellColor)
+        leg = TableWidgetItem(str(totalColumn['leg']), totalCellColor)
         datesShots = sum(totalColumn.values())
-        totalShots = TableWidgetItem(str(datesShots))
+        totalShots = TableWidgetItem(str(datesShots), QColor(247, 104, 64))
         
         self.userInfoTable.setItem(lastRow, 1, face)
         self.userInfoTable.setItem(lastRow, 2, armpit)
