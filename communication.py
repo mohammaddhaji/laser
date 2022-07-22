@@ -81,7 +81,7 @@ def printPacket(packet):
     print(" ".join(packet.hex()[i:i+2].upper() for i in range(0, len(packet.hex()), 2)))
 
 
-def sensors(packet):
+def getSensorsFlag(packet):
     flags = [False] * 6
     for i in range(6):
         if packet[5 + i]:
@@ -101,9 +101,7 @@ def buildPacket(data, page, field, cmdType):
     packet.append(field)
     packet.append(cmdType)
     packet += data
-    crc = Crc16Xmodem.calc(packet[2:])
-    crc_bytes = crc.to_bytes(2, byteorder='big')
-    packet += crc_bytes
+    packet += Crc16Xmodem.calc(packet[2:]).to_bytes(2, byteorder='big')
     packet.append(0xCC)
     if SHOW_SEND_PACKET:
         print('SENT: ', end='')
@@ -238,7 +236,7 @@ def decodePacket(RECEIVED_DATA):
                 key, value = 'airTempSensor', airTempSensor
 
             elif RECEIVED_DATA[FIELD_INDEX] == 12:
-                flags = sensors(RECEIVED_DATA)
+                flags = getSensorsFlag(RECEIVED_DATA)
                 key, value = 'sensorFlagsTest', flags[:2]
 
         elif RECEIVED_DATA[PAGE_INDEX] == LOCK_TIME_PAGE:
@@ -263,7 +261,7 @@ def decodePacket(RECEIVED_DATA):
 
         if RECEIVED_DATA[PAGE_INDEX] in (LASER_PAGE, LASER_CALIB_PAGE, BODY_PART_PAGE):
             if RECEIVED_DATA[FIELD_INDEX] == 0:     
-                flags = sensors(RECEIVED_DATA)
+                flags = getSensorsFlag(RECEIVED_DATA)
                 key, value = 'sensorFlags', flags
                 
             if RECEIVED_DATA[FIELD_INDEX] == 1:
@@ -417,29 +415,28 @@ class SerialThread(QThread):
         nob2 = 0
         while self.loop:
             try:
-                temp = serial.read_all()
-                counter = 0
+                buffer = serial.read_all()
+                buff_idx = 0
 
-                if temp:
-                    len_temp = len(temp)
-                    while counter < len_temp:
+                if buffer:
+                    while buff_idx < len(buffer):
                         if STATE == HEADER_1:
 
-                            if temp[counter] == 0xAA:
+                            if buffer[buff_idx] == 0xAA:
                                 STATE = HEADER_2
 
                         elif STATE == HEADER_2:
 
-                            if temp[counter] == 0xBB:
+                            if buffer[buff_idx] == 0xBB:
                                 STATE = CHECK_NOB_1
                                 RECEIVED_DATA[:] = []
 
                         elif STATE == CHECK_NOB_1:
-                            nob1 = temp[counter]
+                            nob1 = buffer[buff_idx]
                             STATE = CHECK_NOB_2
                         
                         elif STATE == CHECK_NOB_2:
-                            nob2 = temp[counter]
+                            nob2 = buffer[buff_idx]
                             NOB_BYTES[0] = nob1
                             NOB_BYTES[1] = nob2
                             nob = int.from_bytes(NOB_BYTES, "big")
@@ -462,9 +459,9 @@ class SerialThread(QThread):
                                     key, value = decodePacket(RECEIVED_DATA)
                                     self.checkResult(key, value)
                             else:
-                                RECEIVED_DATA.append(temp[counter])
+                                RECEIVED_DATA.append(buffer[buff_idx])
 
-                        counter = counter + 1
+                        buff_idx = buff_idx + 1
             except Exception as e:
                 print(e)
                 log('Serial Unhandled Exception', str(e) + '\n')

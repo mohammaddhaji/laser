@@ -1,10 +1,6 @@
 import math
 
-from PyQt5.QtMultimedia import (
-    QMediaPlayer,
-    QMediaPlaylist,
-    QMediaContent,
-)
+from PyQt5.QtMultimedia import QMediaPlayer, QMediaPlaylist, QMediaContent
 from PyQt5.QtMultimediaWidgets import QVideoWidget
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtWidgets import *
@@ -858,9 +854,11 @@ class TextEdit(QTextEdit):
 
 
 class TableWidgetItem(QTableWidgetItem):
-    def __init__(self, parent = None):
+    def __init__(self, parent = None, bgColor = None):
         QTableWidgetItem.__init__(self, parent)
         self.setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+        if bgColor:
+            self.setBackground(bgColor)
 
 
 class VideoWidget(QVideoWidget):

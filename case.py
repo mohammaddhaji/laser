@@ -21,7 +21,6 @@ class Case:
     def getValue(self, sex, bodyPart):
         if sex == 'male':
             return self.male[bodyPart]
-
         else:
             return self.female[bodyPart]
 
@@ -29,7 +28,6 @@ class Case:
         try:
             if sex == 'male':
                 self.male[bodyPart] = values
-
             else:
                 self.female[bodyPart] = values
 

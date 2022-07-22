@@ -27,6 +27,7 @@ TEXT = {
     'lblPhoneNumber': ['Phone Number', 'شماره تلفن'],
     'lblNextSession': ['Next Session', 'جلسه بعدی'],
     'lblHeaderUserInfo': ['User Information', 'اطلاعات کاربر'],
+    'lblUserInfo': ['User Information', 'اطلاعات کاربر'],
     'btnNextSession': [' Next Session', 'جلسه بعد '],
     'btnSaveHw': ['Save', 'ذخیره'],
     'btnSaveInfo': [' Save', 'ذخیره '],

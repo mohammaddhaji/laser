@@ -682,15 +682,14 @@ class MainWin(QMainWindow):
             elif 90 < energy <= 100:
                 self.coefficients[7] = ratio
 
+            if not saveCoefficients(self.coefficients):
+                self.setMessageLabel(TEXT['saveCoeffError'][self.langIndex], 4)
+            else:
+                self.setMessageLabel(TEXT['Coeff'][self.langIndex] + str(round(ratio, 2)), 4)
+
         except Exception:
             self.setMessageLabel(TEXT['CoeffError'][self.langIndex], 3)
-            return
-            
-        if not saveCoefficients(self.coefficients):
-            self.setMessageLabel(TEXT['saveCoeffError'][self.langIndex], 4)
-        else:
-            self.setMessageLabel(TEXT['Coeff'][self.langIndex] + str(round(ratio, 2)), 4)
-    
+               
     def hwPageChanged(self):
         if self.calibrationPageActive:
             if self.ready:
