@@ -2,7 +2,7 @@ import math
 
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaPlaylist, QMediaContent
 from PyQt5.QtMultimediaWidgets import QVideoWidget
-from PyQt5.QtWebEngineWidgets import QWebEngineView
+# from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
@@ -13,14 +13,14 @@ from utility import calcPosition
 from styles import *
 from paths import *
 
-class WebEngineView(QWebEngineView):
-    def __init__(self, parent):
-        QWebEngineView.__init__(self, parent)
-        self.isLoaded = False
-        self.loadFinished.connect(self.setIsLoaded)
+# class WebEngineView(QWebEngineView):
+#     def __init__(self, parent):
+#         QWebEngineView.__init__(self, parent)
+#         self.isLoaded = False
+#         self.loadFinished.connect(self.setIsLoaded)
 
-    def setIsLoaded(self):
-        self.isLoaded = True
+#     def setIsLoaded(self):
+#         self.isLoaded = True
 
 
 class SelectedBodyPart(QFrame):

@@ -118,6 +118,49 @@ def getDiff(date):
     return (nextSessionDate - today).days + 1
 
 
+def getCoeffIndex(value, interval = False):
+    if value <= 30:
+        if interval:
+            return 0, "[20, 30]"
+        else:
+            return 0
+    elif value <= 40:
+        if interval:
+            return 1, "(30, 40]"
+        else:
+            return 1
+    elif value <= 50:
+        if interval:
+            return 2, "(40, 50]"
+        else:
+            return 2
+    elif value <= 60:
+        if interval:
+            return 3, "(50, 60]"
+        else:
+            return 3
+    elif value <= 70:
+        if interval:
+            return 4, "(60, 70]"
+        else:
+            return 4
+    elif value <= 80:
+        if interval:
+            return 5, "(70, 80]"
+        else:
+            return 5
+    elif value <= 90:
+        if interval:
+            return 6, "(80, 90]"
+        else:
+            return 6
+    elif value <= 100:
+        if interval:
+            return 7, "(90, 100]"
+        else:
+            return 7
+
+
 def addExtenstion(file):
     files = os.listdir(TUTORIALS_DIR)
     if os.path.isfile(join(TUTORIALS_DIR, '.gitignore')):

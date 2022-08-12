@@ -107,6 +107,7 @@ TEXT = {
     'lblSpotSizeCalib': ['Spot Size Area', 'مساحت نقطه تابش'],
     'lblSpotSize': ['Spot Size Area', 'مساحت نقطه تابش'],
     'lblReadValue': ['Read Value', 'مقدار خوانده شده'],
+    'lblCurrentCoeff': ['Current Coeff', 'ضریب فعلی'],
     'btnApplyCoeff': ['Apply Coefficient', 'اعمال ضریب'],
     'total': ['Total','جمع کل'], 
     'firstTime': ['First Time', 'اولین جلسه'],

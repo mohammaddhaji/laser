@@ -6,10 +6,10 @@ import sys
 import os
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 
-from PyQt5.QtWebEngineCore import (
-    QWebEngineUrlSchemeHandler,
-    QWebEngineUrlScheme,
-)
+# from PyQt5.QtWebEngineCore import (
+#     QWebEngineUrlSchemeHandler,
+#     QWebEngineUrlScheme,
+# )
 from PyQt5.uic import loadUi
 from pygame import mixer
 
@@ -26,17 +26,17 @@ mixer.init(buffer=2048)
 mixer.music.set_volume(0.5)
 
 
-class QtSchemeHandler(QWebEngineUrlSchemeHandler):
-    def requestStarted(self, job):
-        request_url = job.requestUrl()
-        request_path = request_url.path()
-        file = QFile('.' + request_path)
-        file.setParent(job)
-        job.destroyed.connect(file.deleteLater)
-        file_info = QFileInfo(file)
-        mime_database = QMimeDatabase()
-        mime_type = mime_database.mimeTypeForFile(file_info)
-        job.reply(mime_type.name().encode(), file)
+# class QtSchemeHandler(QWebEngineUrlSchemeHandler):
+#     def requestStarted(self, job):
+#         request_url = job.requestUrl()
+#         request_path = request_url.path()
+#         file = QFile('.' + request_path)
+#         file.setParent(job)
+#         job.destroyed.connect(file.deleteLater)
+#         file_info = QFileInfo(file)
+#         mime_database = QMimeDatabase()
+#         mime_type = mime_database.mimeTypeForFile(file_info)
+#         job.reply(mime_type.name().encode(), file)
 
 
 class MainWin(QMainWindow):
@@ -50,7 +50,7 @@ class MainWin(QMainWindow):
         self.coefficients = loadCoefficients()
         self.usersData = loadUsers()
         self.usersList = list(self.usersData.values())
-        self.langIndex = 0 if self.configs['Language'] == 'en' else 1
+        self.langIndex = 0
         self.lblEnSelected.setPixmap(QPixmap(SELECTED_LANG_ICON).scaled(70, 70))
         self.serialC = SerialThread()
         self.sensorFlags = [True, True, True, False, False, True]
@@ -223,24 +223,26 @@ class MainWin(QMainWindow):
         op=QGraphicsOpacityEffect(self)
         op.setOpacity(0.8) 
         self.musicFrame.setGraphicsEffect(op)
-        self.browser = WebEngineView(self.mainPage)
-        self.scheme_handler = QtSchemeHandler()
-        self.browser.page().setBackgroundColor(Qt.GlobalColor.transparent)
-        self.browser.page().profile().installUrlSchemeHandler(
-            b"qt", self.scheme_handler
-        )
-        url = QUrl("qt://main")
-        url.setPath("/js/index.html")
-        self.objIsLoaded = False
-        self.browser.load(url)
-        self.browser.setGeometry(100, 200, 700, 700)
+        # self.browser = WebEngineView(self.mainPage)
+        # self.scheme_handler = QtSchemeHandler()
+        # self.browser.page().setBackgroundColor(Qt.GlobalColor.transparent)
+        # self.browser.page().profile().installUrlSchemeHandler(
+        #     b"qt", self.scheme_handler
+        # )
+        # url = QUrl("qt://main")
+        # url.setPath("/js/index.html")
+        # self.browser.load(url)
+        # self.browser.setGeometry(100, 200, 700, 700)
+        self.lblDemo = Label(self.mainPage)
+        self.lblDemo.setGeometry(200, 200, 700, 700)
+        self.lblDemo.setPixmap(QPixmap(LASER_LOGO))
         self.txtFSdays.setText(str(self.configs['FutureSessionsDays']))
         mixer.Channel(0).set_volume(0.5)
         mixer.Channel(0).play(mixer.Sound(STARTUP_SOUND))
 
     def onSplashClicked(self):
-        if self.browser.isLoaded:
-            self.stackedWidget.setCurrentWidget(self.mainPage) 
+        # if self.browser.isLoaded:
+        self.stackedWidget.setCurrentWidget(self.mainPage) 
     
     def setTouchSound(self, active):
         self.configs['TouchSound'] = active
@@ -397,6 +399,7 @@ class MainWin(QMainWindow):
         self.energyWidget.inc.connect(lambda: self.setEnergy('inc'))
         self.energyWidget.dec.connect(lambda: self.setEnergy('dec'))
         self.sliderEnergyCalib.sliderMoved.connect(lambda v: self.setEnergySlider(v*10))
+        self.sliderEnergyCalib.valueChanged.connect(lambda v: self.setCurrentCoeff(v*10))
         self.frequencyWidget.inc.connect(lambda: self.setFrequency('inc'))
         self.frequencyWidget.dec.connect(lambda: self.setFrequency('dec'))
         self.sliderFrequencyCalib.sliderMoved.connect(self.setFrequencySlider)
@@ -506,6 +509,7 @@ class MainWin(QMainWindow):
         self.txtHwPass.returnPressed.connect(self.loginHardwareSettings)
         self.txtOwnerInfo.returnPressed.connect(self.showSplash)
         self.txtResetCounterPass.returnPressed.connect(self.checkResetCounterPass)
+        self.txtReadValue.returnPressed.connect(self.applyCalibrationCoeffs)
         
         for txt in self.findChildren(LineEdit):
             if isinstance(txt, LineEdit):
@@ -650,11 +654,16 @@ class MainWin(QMainWindow):
                 'frequency': self.frequency, 
                 'ready-standby': 'Ready' if self.ready else 'StandBy'
             } 
-        laserPage(fields)
+        laserPage(fields) # testing ...
         self.txtSpotSizeCalib.setText(self.configs['SpotSizeArea'])
+        self.setCurrentCoeff(self.sliderEnergyCalib.value() * 10)
         self.monitorSensorsTimer.start(500)
         self.monitorReceivingSensors.start(3000)
-
+    
+    def setCurrentCoeff(self, value):
+        index, interval = getCoeffIndex(value, interval = True)
+        self.txtCurrentCoeff.setText(f"{interval} → {round(self.coefficients[index], 2)}")
+        
     def applyCalibrationCoeffs(self):
         try:
             readValue = self.txtReadValue.text()
@@ -665,22 +674,9 @@ class MainWin(QMainWindow):
             if not 0.8 <= ratio <= 1.2:
                 raise Exception('out of range')
 
-            if energy <= 30:
-                self.coefficients[0] = ratio
-            elif 30 < energy <= 40:
-                self.coefficients[1] = ratio
-            elif 40 < energy <= 50:
-                self.coefficients[2] = ratio
-            elif 50 < energy <= 60:
-                self.coefficients[3] = ratio
-            elif 60 < energy <= 70:
-                self.coefficients[4] = ratio
-            elif 70 < energy <= 80:
-                self.coefficients[5] = ratio
-            elif 80 < energy <= 90:
-                self.coefficients[6] = ratio
-            elif 90 < energy <= 100:
-                self.coefficients[7] = ratio
+            index = getCoeffIndex(energy)
+            self.coefficients[index] = ratio
+            self.setCurrentCoeff(energy)
 
             if not saveCoefficients(self.coefficients):
                 self.setMessageLabel(TEXT['saveCoeffError'][self.langIndex], 4)
@@ -1484,8 +1480,8 @@ class MainWin(QMainWindow):
                 index = self.stackedWidget.indexOf(self.laserMainPage)
                 if self.stackedWidget.currentIndex() == index:
                     fields = {
-                        'cooling': self.cooling , 'energy': self.correctEngyPulsWidth(),
-                        'pulseWidth': self.correctEngyPulsWidth(),'frequency': self.frequency, 
+                        'cooling': self.cooling , 'energy': self.correctEnergy(),
+                        'pulseWidth': self.correctEnergy(),'frequency': self.frequency, 
                         'couter': self.currentCounter, 'ready-standby': 'Ready'
                     } 
                     laserPage(fields)
@@ -1527,26 +1523,9 @@ class MainWin(QMainWindow):
             self.sliderFrequencyCalib.setEnabled(True)
             self.changeSliderColor(SLIDER_GB, SLIDER_GW)
 
-    def correctEngyPulsWidth(self):
-        e = self.energy
-        if self.energy <= 30:
-            e = self.energy * self.coefficients[0]
-        elif 30 < self.energy <= 40:
-            e = self.energy * self.coefficients[1]
-        elif 40 < self.energy <= 50:
-            e = self.energy * self.coefficients[2]
-        elif 50 < self.energy <= 60:
-            e = self.energy * self.coefficients[3]
-        elif 60 < self.energy <= 70:
-            e = self.energy * self.coefficients[4]
-        elif 70 < self.energy <= 80:
-            e = self.energy * self.coefficients[5]
-        elif 80 < self.energy <= 90:
-            e = self.energy * self.coefficients[6]
-        elif 90 < self.energy <= 100:
-            e = self.energy * self.coefficients[7]
-
-        return int(e)
+    def correctEnergy(self):
+        index = getCoeffIndex(self.energy)
+        return int(self.energy * self.coefficients[index])
 
     def setCooling(self, operation):
         if operation == 'inc':
@@ -1654,8 +1633,8 @@ class MainWin(QMainWindow):
         
     def sendLaserFields(self):
         fields = {
-            'cooling': self.cooling , 'energy': self.correctEngyPulsWidth(),
-            'pulseWidth': self.correctEngyPulsWidth(),'frequency': self.frequency, 
+            'cooling': self.cooling , 'energy': self.correctEnergy(),
+            'pulseWidth': self.correctEnergy(),'frequency': self.frequency, 
             'couter': self.currentCounter, 
         }
         laserPage(fields)
@@ -2355,6 +2334,12 @@ class MainWin(QMainWindow):
 
     def changeLanguage(self, lang):
         global app
+        if (lang == 'fa' and self.langIndex == 1) or (lang == 'en' and self.langIndex == 0):
+            return
+        
+        self.btnEnLang.setDisabled(True)
+        self.btnFaLang.setDisabled(True)
+
         if lang == 'fa':
             app.setStyleSheet('*{font-family:"A Iranian Sans"}')
             self.lblEn.setStyleSheet("font-family:'Arial'")
@@ -2448,7 +2433,10 @@ class MainWin(QMainWindow):
         for i in range(8):
             self.userInfoTable.horizontalHeaderItem(i).setText(
                 TEXT[f'userInfoTable{i}'][self.langIndex]
-            )        
+            )
+
+        self.btnEnLang.setDisabled(False)
+        self.btnFaLang.setDisabled(False)        
         
     def enterLogsPage(self):
         if os.path.isfile(LOGS_PATH):
@@ -2512,12 +2500,11 @@ class MainWin(QMainWindow):
         textCursor.setPosition(self.findIndex + len(findText), QTextCursor.KeepAnchor)
         self.txtLogs.setTextCursor(textCursor)
 
-app = None
-def main():
-    global app
-    scheme = QWebEngineUrlScheme(b"qt")
-    scheme.setFlags(QWebEngineUrlScheme.CorsEnabled)
-    QWebEngineUrlScheme.registerScheme(scheme)
+
+if __name__ == '__main__':
+    # scheme = QWebEngineUrlScheme(b"qt")
+    # scheme.setFlags(QWebEngineUrlScheme.CorsEnabled)
+    # QWebEngineUrlScheme.registerScheme(scheme)
     app = QApplication(sys.argv)
     pixmap = QPixmap(SPLASH_LOADING)
     splash = QSplashScreen(pixmap)
@@ -2528,6 +2515,3 @@ def main():
     win.setFixedSize(QSize(1920, 1080))
     splash.finish(win)
     sys.exit(app.exec_())
-
-if __name__ == '__main__':
-    main()
