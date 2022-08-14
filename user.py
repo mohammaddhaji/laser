@@ -50,14 +50,13 @@ class User:
 def loadUsers():
     try:
         if os.path.isfile(USERS_DATA):
-            fileHandler = open(USERS_DATA, 'rb')
-            usersData = pickle.load(fileHandler)
-            fileHandler.close()
+            with open(USERS_DATA, 'rb') as f:
+                usersData = pickle.load(f)
+            
         else:
             usersData = {}
-            fileHandler = open(USERS_DATA, 'wb')
-            pickle.dump(usersData, fileHandler)
-            fileHandler.close()
+            with open(USERS_DATA, 'wb') as f:
+                pickle.dump(usersData, f)
 
         return usersData
     except Exception as e:

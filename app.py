@@ -6,10 +6,6 @@ import sys
 import os
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 
-# from PyQt5.QtWebEngineCore import (
-#     QWebEngineUrlSchemeHandler,
-#     QWebEngineUrlScheme,
-# )
 from PyQt5.uic import loadUi
 from pygame import mixer
 
@@ -25,18 +21,9 @@ from lock import *
 mixer.init(buffer=2048)
 mixer.music.set_volume(0.5)
 
-
-# class QtSchemeHandler(QWebEngineUrlSchemeHandler):
-#     def requestStarted(self, job):
-#         request_url = job.requestUrl()
-#         request_path = request_url.path()
-#         file = QFile('.' + request_path)
-#         file.setParent(job)
-#         job.destroyed.connect(file.deleteLater)
-#         file_info = QFileInfo(file)
-#         mime_database = QMimeDatabase()
-#         mime_type = mime_database.mimeTypeForFile(file_info)
-#         job.reply(mime_type.name().encode(), file)
+HW_PAGE_ADMIN_PASSWORD = '1'
+HW_PAGE_USER_PASSWORD  = '0'
+RESET_COUNTER_PASSWORD = 'zzxxcc'
 
 
 class MainWin(QMainWindow):
@@ -223,18 +210,8 @@ class MainWin(QMainWindow):
         op=QGraphicsOpacityEffect(self)
         op.setOpacity(0.8) 
         self.musicFrame.setGraphicsEffect(op)
-        # self.browser = WebEngineView(self.mainPage)
-        # self.scheme_handler = QtSchemeHandler()
-        # self.browser.page().setBackgroundColor(Qt.GlobalColor.transparent)
-        # self.browser.page().profile().installUrlSchemeHandler(
-        #     b"qt", self.scheme_handler
-        # )
-        # url = QUrl("qt://main")
-        # url.setPath("/js/index.html")
-        # self.browser.load(url)
-        # self.browser.setGeometry(100, 200, 700, 700)
         self.lblDemo = Label(self.mainPage)
-        self.lblDemo.setGeometry(200, 200, 700, 700)
+        self.lblDemo.setGeometry(170, 200, 700, 700)
         self.lblDemo.setPixmap(QPixmap(LASER_LOGO))
         self.txtFSdays.setText(str(self.configs['FutureSessionsDays']))
         mixer.Channel(0).set_volume(0.5)
@@ -425,7 +402,6 @@ class MainWin(QMainWindow):
         self.btnSystemLock.clicked.connect(lambda: self.hwStackedWidget.setCurrentWidget(self.lockSettingsPage))
         self.btnSystemLock.clicked.connect(self.hwPageChanged)
         self.btnSystemLock.clicked.connect(lambda: lockPage(REPORT))
-        self.btnSystemLock.clicked.connect(lambda: self.systemTimeTimer.start(1000))
         self.btnCalibration.clicked.connect(self.enterCalibrationPage)
         self.btnAddLock.clicked.connect(self.addLock)
         self.btnResetLock.clicked.connect(self.clearLocksTabel)
@@ -1036,7 +1012,7 @@ class MainWin(QMainWindow):
             getLayoutWidgets(self.embeddGridLayout, QLineEdit)
         )
         self.btnHwinfo.setStyleSheet(SETTINGS_MENU_SELECTED)
-        if password == '1':
+        if password == HW_PAGE_ADMIN_PASSWORD:
             for txt in txts:
                 txt.setReadOnly(False)
                 txt.setDisabled(False)
@@ -1058,10 +1034,11 @@ class MainWin(QMainWindow):
             self.txtRpiVersion.setVisible(True)
             self.lblRpiVersion.setVisible(True)            
             self.txtHwPass.clear()
+            self.systemTimeTimer.start(1000)
             self.stackedWidgetSettings.setCurrentWidget(self.hWPage)
             self.enterSettingPage(REPORT)
 
-        elif password == '0':
+        elif password == HW_PAGE_USER_PASSWORD:
             for txt in txts:
                 txt.setReadOnly(True)
                 txt.setDisabled(True)
@@ -1929,7 +1906,7 @@ class MainWin(QMainWindow):
 
     def checkResetCounterPass(self):
         password = self.txtResetCounterPass.text()
-        if password == 'zzxxcc':
+        if password == RESET_COUNTER_PASSWORD:
             self.resetTotalShot()
             self.showResetCounterPassInput('hide')
             self.txtResetCounterPass.clear()
@@ -2416,24 +2393,21 @@ class MainWin(QMainWindow):
             if txt.objectName() in TEXT.keys():
                 txt.setPlaceholderText(TEXT[txt.objectName()][self.langIndex])
 
-        for i in range(4):
-            self.tableFutureSessions.horizontalHeaderItem(i).setText(
-                TEXT[f'tbFsessions{i}'][self.langIndex]
-            )
-            if i == 3: continue
-            self.tableLock.horizontalHeaderItem(i).setText(
-                TEXT[f'tableLock{i}'][self.langIndex]
-            )
-
-        for i in range(4):
-            self.usersTable.horizontalHeaderItem(i).setText(
-                TEXT[f'usersTable{i}'][self.langIndex]
-            )
-
         for i in range(8):
             self.userInfoTable.horizontalHeaderItem(i).setText(
                 TEXT[f'userInfoTable{i}'][self.langIndex]
             )
+            if i < 4:
+                self.tableFutureSessions.horizontalHeaderItem(i).setText(
+                    TEXT[f'tbFsessions{i}'][self.langIndex]
+                )
+                self.usersTable.horizontalHeaderItem(i).setText(
+                    TEXT[f'usersTable{i}'][self.langIndex]
+                )
+            if i < 3: 
+                self.tableLock.horizontalHeaderItem(i).setText(
+                    TEXT[f'tableLock{i}'][self.langIndex]
+                )            
 
         self.btnEnLang.setDisabled(False)
         self.btnFaLang.setDisabled(False)        
@@ -2441,9 +2415,8 @@ class MainWin(QMainWindow):
     def enterLogsPage(self):
         if os.path.isfile(LOGS_PATH):
             EncryptDecrypt(LOGS_PATH, 15)
-            f = open(LOGS_PATH, 'r')
-            self.txtLogs.setText(f.read())
-            f.close()
+            with open(LOGS_PATH, 'r') as f: 
+                self.txtLogs.setText(f.read())
             EncryptDecrypt(LOGS_PATH, 15)
 
         self.hwStackedWidget.setCurrentWidget(self.systemLogPage)
@@ -2460,9 +2433,9 @@ class MainWin(QMainWindow):
 
     def saveUsers(self):
         try:
-            fileHandler = open(USERS_DATA, 'wb')
-            pickle.dump(self.usersData, fileHandler)
-            fileHandler.close()
+            with open(USERS_DATA, 'wb') as f:
+                pickle.dump(self.usersData, f)
+            
         except Exception as e:
             print(e)
             log('Saving Users Info', str(e) + '\n')
@@ -2502,9 +2475,6 @@ class MainWin(QMainWindow):
 
 
 if __name__ == '__main__':
-    # scheme = QWebEngineUrlScheme(b"qt")
-    # scheme.setFlags(QWebEngineUrlScheme.CorsEnabled)
-    # QWebEngineUrlScheme.registerScheme(scheme)
     app = QApplication(sys.argv)
     pixmap = QPixmap(SPLASH_LOADING)
     splash = QSplashScreen(pixmap)
