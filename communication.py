@@ -38,6 +38,7 @@ else:
 
 SHOW_SEND_PACKET = False
 SHOW_RECE_PACKET = False
+PACKET_PRETTIFY  = False
 
 HEADER_1 = 1
 HEADER_2 = 2
@@ -66,6 +67,25 @@ REPORT = 0x0A
 WRITE  = 0x0B 
 READ   = 0x0C
 
+PAGES_NAME = {
+    LASER_PAGE : 'Laser', 
+    SETTING_PAGE : 'Setting', 
+    LOCK_TIME_PAGE : 'Lock and Time', 
+    BODY_PART_PAGE : 'Body Part', 
+    MAIN_PAGE : 'Main', 
+    SHUTDONW_PAGE : 'Shutdown', 
+    UPDATE_PAGE : 'Update', 
+    HARDWARE_TEST_PAGE : 'Hardware Test', 
+    LASER_CALIB_PAGE : 'Laser Calib', 
+    OTHER_PAGE : 'Other' 
+}
+
+COMMANDS_NAME = {
+    REPORT : 'Report',
+    WRITE : 'Write',
+    READ : 'Read'
+}
+
 MOUNT_DIR = '/media/updateFirmware'
 SOURCE_ZIP = 'Laser.zip'
 VERIFY = 'verify'
@@ -79,6 +99,22 @@ NOB_BYTES = bytearray(2)
 
 def printPacket(packet):
     print(" ".join(packet.hex()[i:i+2].upper() for i in range(0, len(packet.hex()), 2)))
+
+
+def printPacketPrettify(packet, send_or_rece):
+    if send_or_rece == 'RECE':
+        print('-'*25 , 'RECEIVED PACKET' , '-'*25)
+    else:
+        print('-'*27 , 'SENT PACKET' , '-'*27)
+
+    print('Number Of Bytes:', int.from_bytes(packet[2:4], byteorder='big'))
+    print('Page:', PAGES_NAME[packet[4]])
+    print('Field Number:', packet[5])
+    print('Command Type:', COMMANDS_NAME[packet[6]])
+    print('Data:', end=' ')
+    printPacket(packet[7:-3])
+    CRC = f"{hex(packet[-3])[2:].upper()} {hex(packet[-1])[2:].upper()}"
+    print("CRC:", CRC, f"({int.from_bytes(packet[-3:-1], byteorder='big')})")
 
 
 def getSensorsFlag(packet):
@@ -104,8 +140,11 @@ def buildPacket(data, page, field, cmdType):
     packet += Crc16Xmodem.calc(packet[2:]).to_bytes(2, byteorder='big')
     packet.append(0xCC)
     if SHOW_SEND_PACKET:
-        print('SENT: ', end='')
-        printPacket(packet)
+        if PACKET_PRETTIFY:
+            printPacketPrettify(packet, 'SENT')
+        else:
+            print('SENT: ', end='')
+            printPacket(packet)
     return packet
 
 
@@ -453,8 +492,11 @@ class SerialThread(QThread):
 
                                 if crc_r == crc_s:
                                     if SHOW_RECE_PACKET:
-                                        print('RECE: ', end='AA BB ')
-                                        printPacket(RECEIVED_DATA)
+                                        if PACKET_PRETTIFY:
+                                            printPacketPrettify(b'\xAA\xBB' + RECEIVED_DATA + b'\xCC', 'RECE')
+                                        else:
+                                            print('RECE: AA BB ', end='')
+                                            printPacket(RECEIVED_DATA + b'\xCC')
 
                                     key, value = decodePacket(RECEIVED_DATA)
                                     self.checkResult(key, value)
