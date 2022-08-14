@@ -218,7 +218,6 @@ class MainWin(QMainWindow):
         mixer.Channel(0).play(mixer.Sound(STARTUP_SOUND))
 
     def onSplashClicked(self):
-        # if self.browser.isLoaded:
         self.stackedWidget.setCurrentWidget(self.mainPage) 
     
     def setTouchSound(self, active):
@@ -486,6 +485,8 @@ class MainWin(QMainWindow):
         self.txtOwnerInfo.returnPressed.connect(self.showSplash)
         self.txtResetCounterPass.returnPressed.connect(self.checkResetCounterPass)
         self.txtReadValue.returnPressed.connect(self.applyCalibrationCoeffs)
+        self.txtPassword.returnPressed.connect(self.unlockLIC)
+        self.txtPassUUID.returnPressed.connect(self.unlockUUID)
         
         for txt in self.findChildren(LineEdit):
             if isinstance(txt, LineEdit):
@@ -754,7 +755,7 @@ class MainWin(QMainWindow):
                 self.txtLockYear.setText(str(nextDate.year))
                 self.txtLockMonth.setText(str(nextDate.month))
                 self.txtLockDay.setText(str(nextDate.day)) 
-                self.unlockLIC(auto=True)
+                self.checkLIC()
         except Exception as e:
             log('Startup Setting Time', str(e) + '\n')
             
@@ -971,8 +972,7 @@ class MainWin(QMainWindow):
             index = self.stackedWidgetLock.indexOf(self.copyRightPage)
             self.stackedWidgetLock.setCurrentIndex(index)
 
-    def unlockLIC(self, auto=False):
-        userPass = self.txtPassword.text().strip()
+    def getLocks(self):
         locks = []
         for lock in self.configs['Locks']:
             date = toJalali(lock.date)
@@ -980,27 +980,37 @@ class MainWin(QMainWindow):
                 locks.append(lock)
 
         locks.sort(key=lambda x: x.date)
+        return locks
 
-        if len(locks) > 0:
+    def unlockLIC(self):
+        userPass = self.txtPassword.text().strip()
+        locks = self.getLocks()
+
+        if not locks:
+            self.setKeyboard('hide')
+            index = self.stackedWidgetLock.indexOf(self.enterLaserPage)
+            self.stackedWidgetLock.setCurrentIndex(index)
+            self.checkUUID()
+            return
+
+        if locks[0].checkPassword(userPass):
+            self.saveConfigs()
+            self.setKeyboard('hide')
+            index = self.stackedWidgetLock.indexOf(self.enterLaserPage)
+            self.stackedWidgetLock.setCurrentIndex(index)
+            self.checkUUID()
+        else:
+            self.setMessageLabel(TEXT['wrongPass'][self.langIndex], 3)
+            self.txtPassword.setFocus()
+            self.txtPassword.selectAll()
+
+    def checkLIC(self):
+        locks = self.getLocks()
+
+        if locks:
             index = self.stackedWidgetLock.indexOf(self.licLockPage)
             self.stackedWidgetLock.setCurrentIndex(index)
             self.txtID.setText(str(locks[0].license))
-        else:
-            self.checkUUID()
-        
-        for lock in locks:
-            if lock.checkPassword(userPass):
-                self.saveConfigs()
-                self.setKeyboard('hide')
-                index = self.stackedWidgetLock.indexOf(self.enterLaserPage)
-                self.stackedWidgetLock.setCurrentIndex(index)
-                return
-
-            else:
-                if not auto:
-                    self.setMessageLabel(TEXT['wrongPass'][self.langIndex], 3)
-                    self.txtPassword.setFocus()
-                    self.txtPassword.selectAll()
 
     def loginHardwareSettings(self):
         password = self.txtHwPass.text()
