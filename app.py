@@ -1967,9 +1967,9 @@ class MainWin(QMainWindow):
         action.chbDel.pressed.connect(lambda: self.playTouchSound('t'))
         action.delete.connect(self.userDeleteChbToggled)
         self.usersTable.setCellWidget(rowPosition, 3, action)
-        number = QPropertyAnimation(user.phoneNumber)
-        name = QPropertyAnimation(user.name)
-        sessions = QPropertyAnimation()
+        number = QTableWidgetItem(user.phoneNumber)
+        name = QTableWidgetItem(user.name)
+        sessions = QTableWidgetItem()
         sessions.setData(Qt.EditRole, user.sessionNumber - 1)
         number.setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
         name.setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
@@ -2327,15 +2327,15 @@ class MainWin(QMainWindow):
         self.animation7.finished.connect(lambda: self.lblMsg.setVisible(False))
         self.animation7.start()
 
-    def changeLanguage(self, lang):
+    def changeLanguage(self, lng):
         global app
-        if (lang == 'fa' and self.langIndex == 1) or (lang == 'en' and self.langIndex == 0):
+        if (lng == 'fa' and self.langIndex == 1) or (lng == 'en' and self.langIndex == 0):
             return
         
         self.btnEnLang.setDisabled(True)
         self.btnFaLang.setDisabled(True)
 
-        if lang == 'fa':
+        if lng == 'fa':
             app.setStyleSheet('*{font-family:"A Iranian Sans"}')
             self.lblEn.setStyleSheet("font-family:'Arial'")
             self.lblJouleCalib.setAlignment(Qt.AlignLeading|Qt.AlignRight|Qt.AlignVCenter)

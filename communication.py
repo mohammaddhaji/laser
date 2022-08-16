@@ -63,8 +63,8 @@ LASER_CALIB_PAGE = 8
 OTHER_PAGE = 9
 
 REPORT = 0x0A
-WRITE  = 0x0B 
-READ   = 0x0C
+WRITE = 0x0B 
+READ = 0x0C
 
 MOUNT_DIR = '/media/updateFirmware'
 SOURCE_ZIP = 'Laser.zip'
@@ -452,8 +452,8 @@ class SerialThread(QThread):
 
                                 if crc_r == crc_s:
                                     if SHOW_RECE_PACKET:
-                                            print('RECE: AA BB ', end='')
-                                            printPacket(RECEIVED_DATA + b'\xCC')
+                                        print('RECE: AA BB ', end='')
+                                        printPacket(RECEIVED_DATA + b'\xCC')
 
                                     key, value = decodePacket(RECEIVED_DATA)
                                     self.checkResult(key, value)
