@@ -1,8 +1,8 @@
 import math
+import os
 
-from PyQt5.QtMultimedia import QMediaPlayer, QMediaPlaylist, QMediaContent
+from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtMultimediaWidgets import QVideoWidget
-# from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
@@ -10,17 +10,8 @@ from werkzeug.utils import cached_property
 
 from communication import HARDWARE_TEST_PAGE, READ, sendPacket
 from utility import calcPosition
-from styles import *
-from paths import *
-
-# class WebEngineView(QWebEngineView):
-#     def __init__(self, parent):
-#         QWebEngineView.__init__(self, parent)
-#         self.isLoaded = False
-#         self.loadFinished.connect(self.setIsLoaded)
-
-#     def setIsLoaded(self):
-#         self.isLoaded = True
+import styles 
+import paths 
 
 
 class SelectedBodyPart(QFrame):
@@ -46,7 +37,7 @@ class SelectedBodyPart(QFrame):
         self.label.setText("")
         self.label.setAlignment(Qt.AlignCenter)
         self.label.setObjectName("label")
-        icon = QPixmap(BODY_PART_ICONS['f arm'])
+        icon = QPixmap(paths.BODY_PART_ICONS['f arm'])
         self.label.setPixmap(icon.scaled(200,200))
         self.verticalLayout.addWidget(self.label)
         self.label_2 = QLabel(self.verticalLayoutWidget)
@@ -100,7 +91,7 @@ class SkinGrade(QFrame):
         self.btnCaseI.setStyleSheet('background-color: rgb(128, 157, 255);')
         self.btnCaseI.setText("")
         icon = QIcon()
-        icon.addPixmap(QPixmap(CASE_I), QIcon.Normal, QIcon.Off)
+        icon.addPixmap(QPixmap(paths.CASE_I), QIcon.Normal, QIcon.Off)
         self.btnCaseI.setIcon(icon)
         self.btnCaseI.setIconSize(QSize(80, 80))
         self.btnCaseI.setObjectName("btnCaseI")
@@ -109,7 +100,7 @@ class SkinGrade(QFrame):
         self.btnCaseII.setMaximumSize(QSize(maxWidth, 16777215))
         self.btnCaseII.setText("")
         icon1 = QIcon()
-        icon1.addPixmap(QPixmap(CASE_II), QIcon.Normal, QIcon.Off)
+        icon1.addPixmap(QPixmap(paths.CASE_II), QIcon.Normal, QIcon.Off)
         self.btnCaseII.setIcon(icon1)
         self.btnCaseII.setIconSize(QSize(80, 80))
         self.btnCaseII.setObjectName("btnCaseII")
@@ -118,7 +109,7 @@ class SkinGrade(QFrame):
         self.btnCaseIII.setMaximumSize(QSize(maxWidth, 16777215))
         self.btnCaseIII.setText("")
         icon2 = QIcon()
-        icon2.addPixmap(QPixmap(CASE_II), QIcon.Normal, QIcon.Off)
+        icon2.addPixmap(QPixmap(paths.CASE_II), QIcon.Normal, QIcon.Off)
         self.btnCaseIII.setIcon(icon2)
         self.btnCaseIII.setIconSize(QSize(80, 80))
         self.btnCaseIII.setObjectName("btnCaseIII")
@@ -127,7 +118,7 @@ class SkinGrade(QFrame):
         self.btnCaseIV.setMaximumSize(QSize(maxWidth, 16777215))
         self.btnCaseIV.setText("")
         icon3 = QIcon()
-        icon3.addPixmap(QPixmap(CASE_IV), QIcon.Normal, QIcon.Off)
+        icon3.addPixmap(QPixmap(paths.CASE_IV), QIcon.Normal, QIcon.Off)
         self.btnCaseIV.setIcon(icon3)
         self.btnCaseIV.setIconSize(QSize(80, 80))
         self.btnCaseIV.setObjectName("btnCaseIV")
@@ -136,7 +127,7 @@ class SkinGrade(QFrame):
         self.btnCaseV.setMaximumSize(QSize(maxWidth, 16777215))
         self.btnCaseV.setText("")
         icon4 = QIcon()
-        icon4.addPixmap(QPixmap(CASE_V), QIcon.Normal, QIcon.Off)
+        icon4.addPixmap(QPixmap(paths.CASE_V), QIcon.Normal, QIcon.Off)
         self.btnCaseV.setIcon(icon4)
         self.btnCaseV.setIconSize(QSize(80, 80))
         self.btnCaseV.setObjectName("btnCaseV")
@@ -146,7 +137,7 @@ class SkinGrade(QFrame):
         self.btnSave.setText("Save")
         self.btnSave.setFont(QFont('Arial', 20))
         icon5 = QIcon()
-        icon5.addPixmap(QPixmap(CASE_SAVE), QIcon.Normal, QIcon.Off)
+        icon5.addPixmap(QPixmap(paths.CASE_SAVE), QIcon.Normal, QIcon.Off)
         self.btnSave.setIcon(icon5)
         self.btnSave.setIconSize(QSize(70, 70))
         self.btnSave.setObjectName("save")
@@ -281,14 +272,14 @@ class Parameter(QFrame):
         self.btnDec.setGeometry(QRect(0, 121, 114, 110))
         self.btnDec.setText("")
         icon = QIcon()
-        icon.addPixmap(QPixmap(DEC_BLACK), QIcon.Normal, QIcon.Off)
+        icon.addPixmap(QPixmap(paths.DEC_BLACK), QIcon.Normal, QIcon.Off)
         self.btnDec.setIcon(icon)
         self.btnDec.setIconSize(QSize(110, 110))
         self.btnInc = QPushButton(self)
         self.btnInc.setGeometry(QRect(460, 121, 114, 110))
         self.btnInc.setText("")
         icon1 = QIcon()
-        icon1.addPixmap(QPixmap(INC_BLACK), QIcon.Normal, QIcon.Off)
+        icon1.addPixmap(QPixmap(paths.INC_BLACK), QIcon.Normal, QIcon.Off)
         self.btnInc.setIcon(icon1)
         self.btnInc.setIconSize(QSize(110, 110))
         self.btnInc.setStyleSheet('''
@@ -328,7 +319,7 @@ class Parameter(QFrame):
         parameter = x
         self.lblParameter.setText(parameter)
         if self.lblParameter.text() == 'Energy':
-            setIcon(LEFT_YELLOW, RIGHT_YELLOW)
+            setIcon(paths.LEFT_YELLOW, paths.RIGHT_YELLOW)
             self.max = 100
             self.lblUnit.setText('Joule')
             self.color = 'rgba(255, 255, 26, 255)'
@@ -340,7 +331,7 @@ class Parameter(QFrame):
             }'''
         )
         elif self.lblParameter.text() == 'Pulse Width':
-            setIcon(LEFT_GREEN, RIGHT_GREEN)
+            setIcon(paths.LEFT_GREEN, paths.RIGHT_GREEN)
             self.max = 100
             self.lblUnit.setText('mSec')
             self.color = 'rgba(85, 255, 127, 255)'
@@ -352,7 +343,7 @@ class Parameter(QFrame):
             }'''
         )
         elif self.lblParameter.text() == 'Frequency':
-            setIcon(LEFT_RED, RIGHT_RED)
+            setIcon(paths.LEFT_RED, paths.RIGHT_RED)
             self.max = 10
             self.lblUnit.setText('Hz')
             self.color = 'rgba(255, 0, 127, 255)'
@@ -364,7 +355,7 @@ class Parameter(QFrame):
             }'''
         )
         if self.lblParameter.text() == 'Cooling':
-            setIcon(LEFT_BLUE, RIGHT_BLUE)
+            setIcon(paths.LEFT_BLUE, paths.RIGHT_BLUE)
             self.max = 5
             self.lblUnit.setText('')
             self.color = 'rgba(85, 170, 255, 255)'
@@ -475,7 +466,7 @@ class PowerOption(QFrame):
         super().__init__(parent)
         self.setMinimumSize(QSize(385, 0))
         self.setMaximumSize(QSize(16777215, 0))
-        self.setStyleSheet(POWER_OPTION_L)
+        self.setStyleSheet(styles.POWER_OPTION_L)
         self.verticalLayout_1 = QVBoxLayout(self)
         self.verticalLayout_1.setContentsMargins(-1, 10, 47, -1)
         self.verticalLayout_1.setSpacing(0)
@@ -571,15 +562,15 @@ class Relay:
         self.btnPass = btnPass
         self.btnFail = btnFail
         self.field = field
-        self.relay.setStyleSheet(RELAY_STYLE)
-        self.btnPass.setStyleSheet(PASS_FAIL_STYLE)
-        self.btnFail.setStyleSheet(PASS_FAIL_STYLE)
+        self.relay.setStyleSheet(styles.RELAY_STYLE)
+        self.btnPass.setStyleSheet(styles.PASS_FAIL_STYLE)
+        self.btnFail.setStyleSheet(styles.PASS_FAIL_STYLE)
         self.relay.clicked.connect(self.listen)
         self.icon = QIcon()
-        self.icon.addPixmap(QPixmap(RELAY_ICON))
+        self.icon.addPixmap(QPixmap(paths.RELAY_ICON))
         self.relay.setIcon(self.icon)
         self.relay.setIconSize(QSize(100, 100))
-        self.movie = QMovie(RELAY_GIF)
+        self.movie = QMovie(paths.RELAY_GIF)
         self.movie.frameChanged.connect(lambda: self.relay.setIcon(QIcon(self.movie.currentPixmap())))
         self.relayTimer = QTimer()
         self.resultTimer = QTimer()
@@ -625,17 +616,17 @@ class Relay:
         self.relay.setIcon(self.icon)
 
         if self.tests[0] and self.tests[1] and self.tests[2]:
-            self.btnPass.setStyleSheet(PASS_STYLE)
+            self.btnPass.setStyleSheet(styles.PASS_STYLE)
         else:
-             self.btnFail.setStyleSheet(FAIL_STYLE) 
+             self.btnFail.setStyleSheet(styles.FAIL_STYLE) 
 
         self.tests = [False, False, False]
         self.resultTimer.start(3000)
 
     def result(self):
         self.resultTimer.stop()
-        self.btnPass.setStyleSheet(PASS_FAIL_STYLE)
-        self.btnFail.setStyleSheet(PASS_FAIL_STYLE)
+        self.btnPass.setStyleSheet(styles.PASS_FAIL_STYLE)
+        self.btnFail.setStyleSheet(styles.PASS_FAIL_STYLE)
 
 
 class SensorTest:
@@ -644,11 +635,11 @@ class SensorTest:
 
     def setOk(self, ok):
         if ok:
-            self.widgets['btnOk'].setStyleSheet(SENSOR_OK_TEST_STYLE)
-            self.widgets['btnNotOk'].setStyleSheet(SENSOR_TEST_STYLE)
+            self.widgets['btnOk'].setStyleSheet(styles.SENSOR_OK_TEST_STYLE)
+            self.widgets['btnNotOk'].setStyleSheet(styles.SENSOR_TEST_STYLE)
         else:
-            self.widgets['btnOk'].setStyleSheet(SENSOR_TEST_STYLE)
-            self.widgets['btnNotOk'].setStyleSheet(SENSOR_NOT_OK_TEST_STYLE)
+            self.widgets['btnOk'].setStyleSheet(styles.SENSOR_TEST_STYLE)
+            self.widgets['btnNotOk'].setStyleSheet(styles.SENSOR_NOT_OK_TEST_STYLE)
 
     def setValue(self, value):
         self.widgets['txt'].setText(f"{value}  {self.widgets['unit']}")
@@ -666,9 +657,9 @@ class DriverCurrent:
         self.timer.timeout.connect(self.finish)
         self.resetTimer.timeout.connect(self.reset)
         self.icon = QIcon()
-        self.icon.addPixmap(QPixmap(DRIVER_CURRENT))
+        self.icon.addPixmap(QPixmap(paths.DRIVER_CURRENT))
         self.btnStart.setIcon(self.icon)
-        self.movie = QMovie(RELAY_GIF)
+        self.movie = QMovie(paths.RELAY_GIF)
         self.movie.frameChanged.connect(
             lambda: self.btnStart.setIcon(QIcon(self.movie.currentPixmap()))
         )
@@ -719,8 +710,8 @@ class Sensors:
         self.tempCalib = tempCalib        
         self.lockIco = QIcon()
         self.unlockIco = QIcon()
-        self.lockIco.addPixmap(QPixmap(LOCK))
-        self.unlockIco.addPixmap(QPixmap(UNLOCK))
+        self.lockIco.addPixmap(QPixmap(paths.LOCK))
+        self.unlockIco.addPixmap(QPixmap(paths.UNLOCK))
         self.oh.setVisible(False)
         self.pd.setVisible(False)
         self.ohCalib.setVisible(False)
@@ -736,56 +727,56 @@ class Sensors:
         if status[0]:
             lock.setIcon(self.lockIco)
             if self.flag:
-                lock.setStyleSheet(SENSOR_NOT_OK)
+                lock.setStyleSheet(styles.SENSOR_NOT_OK)
             else:
-                lock.setStyleSheet(SENSOR_OK)
+                lock.setStyleSheet(styles.SENSOR_OK)
         else:
-            lock.setStyleSheet(SENSOR_OK)
+            lock.setStyleSheet(styles.SENSOR_OK)
             lock.setIcon(self.unlockIco)
 
         if status[1]:
             if self.flag:
-                wl.setStyleSheet(SENSOR_NOT_OK)
+                wl.setStyleSheet(styles.SENSOR_NOT_OK)
             else:
-                wl.setStyleSheet(SENSOR_OK)
+                wl.setStyleSheet(styles.SENSOR_OK)
         else:
-            wl.setStyleSheet(SENSOR_OK)
+            wl.setStyleSheet(styles.SENSOR_OK)
 
         if status[2]:
             if self.flag:
-                wf.setStyleSheet(SENSOR_NOT_OK)
+                wf.setStyleSheet(styles.SENSOR_NOT_OK)
             else:
-                wf.setStyleSheet(SENSOR_OK)
+                wf.setStyleSheet(styles.SENSOR_OK)
         else:
-            wf.setStyleSheet(SENSOR_OK)
+            wf.setStyleSheet(styles.SENSOR_OK)
 
         if status[3]:
             oh.setVisible(True)
             if self.flag:
-                oh.setStyleSheet(HIDDEN_SENSOR_NOT_OK)
+                oh.setStyleSheet(styles.HIDDEN_SENSOR_NOT_OK)
             else:
-                oh.setStyleSheet(HIDDEN_SENSOR_OK)
+                oh.setStyleSheet(styles.HIDDEN_SENSOR_OK)
         else:
             oh.setVisible(False)
-            oh.setStyleSheet(HIDDEN_SENSOR_OK)
+            oh.setStyleSheet(styles.HIDDEN_SENSOR_OK)
 
         if status[4]:
             pd.setVisible(True)
             if self.flag:
-                pd.setStyleSheet(HIDDEN_SENSOR_NOT_OK)
+                pd.setStyleSheet(styles.HIDDEN_SENSOR_NOT_OK)
             else:
-                pd.setStyleSheet(HIDDEN_SENSOR_OK)
+                pd.setStyleSheet(styles.HIDDEN_SENSOR_OK)
         else:
             pd.setVisible(False)
-            pd.setStyleSheet(HIDDEN_SENSOR_OK)
+            pd.setStyleSheet(styles.HIDDEN_SENSOR_OK)
 
         if status[5]:
             if self.flag:
-                temp.setStyleSheet(SENSOR_NOT_OK)
+                temp.setStyleSheet(styles.SENSOR_NOT_OK)
             else:
-                temp.setStyleSheet(SENSOR_OK)
+                temp.setStyleSheet(styles.SENSOR_OK)
         else:
-            temp.setStyleSheet(SENSOR_OK)
+            temp.setStyleSheet(styles.SENSOR_OK)
         
 
 class Action(QWidget):
@@ -794,11 +785,11 @@ class Action(QWidget):
     def __init__(self, parent, number):
         super().__init__(parent)
         self.number = number
-        stylesheet = ACTION_BTN
+        stylesheet = styles.ACTION_BTN
         layout = QHBoxLayout(self)
         self.btnInfo = QPushButton(self)
         infoIcon = QIcon()
-        infoIcon.addPixmap(QPixmap(INFORMATION_ICON), QIcon.Normal, QIcon.Off)
+        infoIcon.addPixmap(QPixmap(paths.INFORMATION_ICON), QIcon.Normal, QIcon.Off)
         self.btnInfo.setIcon(infoIcon)
         self.btnInfo.setIconSize(QSize(60, 60))
         self.btnInfo.setStyleSheet(stylesheet)
@@ -806,7 +797,7 @@ class Action(QWidget):
 
         self.chbDel = QCheckBox(self)
         self.chbDel.setMinimumSize(QSize(60, 60))
-        self.chbDel.setStyleSheet(CHECKBOX_DEL)
+        self.chbDel.setStyleSheet(styles.CHECKBOX_DEL)
         self.chbDel.toggled.connect(lambda: self.delete.emit(self.number))
 
         spacerItem = QSpacerItem(
@@ -1215,7 +1206,7 @@ class AnalogGaugeWidget(QWidget):
 
         self.pen = QPen(QColor(0, 0, 0))
 
-        QFontDatabase.addApplicationFont(VAUGE_FONT)
+        QFontDatabase.addApplicationFont(paths.VAUGE_FONT)
 
         self.scale_polygon_colors = []
 
@@ -1897,7 +1888,7 @@ class Player(QFrame):
         self.btnClose.setMaximumSize(QSize(50, 50))
         self.btnClose.setText("")
         icon = QIcon()
-        icon.addPixmap(QPixmap(CLOSE_FILM), QIcon.Normal, QIcon.Off)
+        icon.addPixmap(QPixmap(paths.CLOSE_FILM), QIcon.Normal, QIcon.Off)
         self.btnClose.setIcon(icon)
         self.btnClose.setIconSize(QSize(50, 50))
         self.btnClose.setObjectName("btnClose")
@@ -1929,7 +1920,7 @@ class Player(QFrame):
         self.horizontalLayout_2.setContentsMargins(23, -1, 23, -1)
         self.sliderVolume = QSlider(self.bottomFrame)
         self.sliderVolume.setMinimumSize(QSize(50, 0))
-        self.sliderVolume.setStyleSheet(SLIDER_VOLUME)
+        self.sliderVolume.setStyleSheet(styles.SLIDER_VOLUME)
         self.sliderVolume.setMaximum(50)
         self.sliderVolume.setProperty("value", 50)
         self.sliderVolume.setOrientation(Qt.Vertical)
@@ -1938,10 +1929,10 @@ class Player(QFrame):
         spacerItem1 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
         self.horizontalLayout_2.addItem(spacerItem1)
         self.btnPlay = QPushButton(self.bottomFrame)
-        self.btnPlay.setStyleSheet(BTN_PLAY)
+        self.btnPlay.setStyleSheet(styles.BTN_PLAY)
         self.btnPlay.setText("")
         icon1 = QIcon()
-        icon1.addPixmap(QPixmap(PLAY_ICON), QIcon.Normal, QIcon.Off)
+        icon1.addPixmap(QPixmap(paths.PLAY_ICON), QIcon.Normal, QIcon.Off)
         self.btnPlay.setIcon(icon1)
         self.btnPlay.setIconSize(QSize(80, 80))
         self.btnPlay.setObjectName("btnPlay")
@@ -1961,7 +1952,7 @@ class Player(QFrame):
         self.verticalLayout_3.addWidget(self.label)
         self.positionSlider = QSlider(self.bottomFrame)
         self.positionSlider.setMinimumSize(QSize(0, 70))
-        self.positionSlider.setStyleSheet(SLIDER_DURATION)
+        self.positionSlider.setStyleSheet(styles.SLIDER_DURATION)
         self.positionSlider.setOrientation(Qt.Horizontal)
         self.positionSlider.setObjectName("positionSlider")
         self.verticalLayout_3.addWidget(self.positionSlider)
@@ -1979,7 +1970,7 @@ class Player(QFrame):
         self.horizontalLayout_2.addItem(spacerItem3)
         self.btnFullscreen = QPushButton(self.bottomFrame)
         icon2 = QIcon()
-        icon2.addPixmap(QPixmap(FULLSCREEN_ICON), QIcon.Normal, QIcon.Off)
+        icon2.addPixmap(QPixmap(paths.FULLSCREEN_ICON), QIcon.Normal, QIcon.Off)
         self.btnFullscreen.setIcon(icon2)
         self.btnFullscreen.setIconSize(QSize(50, 50))
         self.btnFullscreen.setObjectName("btnFullscreen")
@@ -1997,8 +1988,8 @@ class Player(QFrame):
 
         self.playIcon = QIcon()
         self.pauseIcon = QIcon()
-        self.playIcon.addPixmap(QPixmap(PLAY_ICON))
-        self.pauseIcon.addPixmap(QPixmap(PAUSE_ICON))
+        self.playIcon.addPixmap(QPixmap(paths.PLAY_ICON))
+        self.pauseIcon.addPixmap(QPixmap(paths.PAUSE_ICON))
 
         self.length = '00:00:00'
         self.lblLength.setText("00:00:00")
@@ -2049,7 +2040,7 @@ class Player(QFrame):
         self.mediaPlayer.setVolume(v)
 
     def videoSelected(self, name):
-        path = join(TUTORIALS_DIR, name)
+        path = os.path.join(paths.TUTORIALS_DIR, name)
         self.lblTitle.setText(name)
         self.mediaPlayer.setMedia(QMediaContent(QUrl.fromLocalFile(path)))
         self.play()
@@ -2057,7 +2048,7 @@ class Player(QFrame):
     def showFullScreen(self, full, onClosing=False):
         icon = QIcon()
         if full:
-            icon.addPixmap(QPixmap(NOT_FULLSCREEN_ICON))
+            icon.addPixmap(QPixmap(paths.NOT_FULLSCREEN_ICON))
             pos = QRect(-2, -2, 1924, 1084)
             self.verticalLayout_4.setContentsMargins(0, 0, 0, 0)
             self.setStyleSheet("""
@@ -2069,7 +2060,7 @@ class Player(QFrame):
                 QLabel{color:rgb(255, 255, 255);}
             """)
         else:
-            icon.addPixmap(QPixmap(FULLSCREEN_ICON))
+            icon.addPixmap(QPixmap(paths.FULLSCREEN_ICON))
             ax = (1920 - 1200) / 2
             ay = (1080 - 680) / 2
             pos = QRect(ax, ay, 1200, 680)

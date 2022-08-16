@@ -1,22 +1,29 @@
-from itertools import chain
 import jdatetime
+import hashlib
+import pickle
 import time 
 import math
 import sys
 import os
+from itertools import chain
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 
+from PyQt5.QtWidgets import *
+from PyQt5.QtGui import *
+from PyQt5.QtCore import *
+from PyQt5.QtMultimedia import *
 from PyQt5.uic import loadUi
 from pygame import mixer
 
-from communication import *
-from promotions import *
-from utility import *
-from styles import *
-from lang import *
-from case import *
-from user import *
-from lock import *
+import communication
+import promotions
+import utility
+import styles
+import paths
+import case  
+import user
+import lang
+from lock import Lock
 
 mixer.init(buffer=2048)
 mixer.music.set_volume(0.5)
@@ -29,19 +36,19 @@ RESET_COUNTER_PASSWORD = 'zzxxcc'
 class MainWin(QMainWindow):
     def __init__(self, *args, **kwargs):
         super(MainWin, self).__init__(*args, **kwargs)
-        loadUi(APP_UI, self)
+        loadUi(paths.APP_UI, self)
         self.setupUi()
         
     def setupUi(self):
-        self.configs = loadConfigs()
-        self.coefficients = loadCoefficients()
-        self.usersData = loadUsers()
+        self.configs = utility.loadConfigs()
+        self.coefficients = utility.loadCoefficients()
+        self.usersData = user.loadUsers()
         self.usersList = list(self.usersData.values())
         self.langIndex = 0
-        self.lblEnSelected.setPixmap(QPixmap(SELECTED_LANG_ICON).scaled(70, 70))
-        self.serialC = SerialThread()
+        self.lblEnSelected.setPixmap(QPixmap(paths.SELECTED_LANG_ICON).scaled(70, 70))
+        self.serialC = communication.SerialThread()
         self.sensorFlags = [True, True, True, False, False, True]
-        self.sensors = Sensors(
+        self.sensors = promotions.Sensors(
             self.btnLock,
             self.btnWaterLevel,
             self.btnWaterflow,
@@ -68,20 +75,20 @@ class MainWin(QMainWindow):
         self.serialC.firmwareVesion.connect(self.txtFirmwareVersion.setText)
         self.serialC.receivingSensors.connect(self.setReceivingSensorsData)
         self.serialC.updateProgress.connect(self.setUpdateFirmwareProgress)
-        self.serialC.readCooling.connect(lambda: laserPage({'cooling': self.cooling}))
-        self.serialC.readEnergy.connect(lambda: laserPage({'energy': self.energy}))
-        self.serialC.readPulseWidht.connect(lambda: laserPage({'pulseWidht': self.pulseWidth}))
-        self.serialC.readFrequency.connect(lambda: laserPage({'frequency': self.frequency}))
+        self.serialC.readCooling.connect(lambda: communication.laserPage({'cooling': self.cooling}))
+        self.serialC.readEnergy.connect(lambda: communication.laserPage({'energy': self.energy}))
+        self.serialC.readPulseWidht.connect(lambda: communication.laserPage({'pulseWidht': self.pulseWidth}))
+        self.serialC.readFrequency.connect(lambda: communication.laserPage({'frequency': self.frequency}))
         self.serialC.sysDate.connect(self.receiveDate)
         self.serialC.sysClock.connect(self.adjustTime)
         self.serialC.start()
-        self.updateT = UpdateFirmware()
-        self.readMusicT = ReadMusics()
+        self.updateT = communication.UpdateFirmware()
+        self.readMusicT = utility.ReadMusics()
         self.readMusicT.result.connect(self.readMusicResult)
         self.readMusicT.paths.connect(self.addMusics)
         self.updateT.result.connect(self.updateGuiResult)
-        self.shutdownMovie = QMovie(SHUTDONW_GIF)
-        self.musicMovie = QMovie(MUSIC_GIF)
+        self.shutdownMovie = QMovie(paths.SHUTDONW_GIF)
+        self.musicMovie = QMovie(paths.MUSIC_GIF)
         self.coolingMovie = {}
         self.musicMovie.setCacheMode(QMovie.CacheAll)
         self.musicMovie.jumpToFrame(95)
@@ -93,34 +100,34 @@ class MainWin(QMainWindow):
         self.adssMedia.setVideoOutput(self.adssVideo)
         self.adssMedia.stateChanged.connect(self.adssDemoEnd)
         self.musicSound = QMediaPlayer()
-        self.touchSound = mixer.Sound(TOUCH_SOUND)
-        self.keyboardSound = mixer.Sound(KEYBOARD_SOUND)
+        self.touchSound = mixer.Sound(paths.TOUCH_SOUND)
+        self.keyboardSound = mixer.Sound(paths.KEYBOARD_SOUND)
         self.playlist = QMediaPlaylist()
         self.playlist.currentIndexChanged.connect(self.playlistIndexChanged)
         self.touchSound.set_volume(0.5)
         self.keyboardSound.set_volume(0.5)
-        self.lblSplash = Label(self.splashPage)
+        self.lblSplash = promotions.Label(self.splashPage)
         self.lblSplash.setGeometry(0, 0, 1920, 1080)
-        self.lblSplash.setPixmap(QPixmap(SPLASH).scaled(1920,1080))
+        self.lblSplash.setPixmap(QPixmap(paths.SPLASH).scaled(1920,1080))
         self.lblSplash.clicked.connect(lambda: self.changeAnimation('vertical'))
         self.lblSplash.clicked.connect(self.onSplashClicked)
         font_db = QFontDatabase()
-        font_id = font_db.addApplicationFont(IRAN_NASTALIQ)
-        font_id = font_db.addApplicationFont(IRANIAN_SANS)
+        font_id = font_db.addApplicationFont(paths.IRAN_NASTALIQ)
+        font_id = font_db.addApplicationFont(paths.IRANIAN_SANS)
         self.ownerInfoSplash = QLabel(self.lblSplash)
         self.ownerInfoSplash.setText('')
         ownerInfo = self.configs['OwnerInfo']
-        if ownerInfo and isFarsi(ownerInfo):
-            self.ownerInfoSplash.setStyleSheet(OWNER_INFO_STYLE_FA)
+        if ownerInfo and utility.isFarsi(ownerInfo):
+            self.ownerInfoSplash.setStyleSheet(styles.OWNER_INFO_STYLE_FA)
         else:
-            self.ownerInfoSplash.setStyleSheet(OWNER_INFO_STYLE_EN)
+            self.ownerInfoSplash.setStyleSheet(styles.OWNER_INFO_STYLE_EN)
         self.ownerInfoSplash.setAlignment(Qt.AlignCenter)
         self.ownerInfoSplash.setAlignment(Qt.AlignHCenter)
         self.ownerInfoSplash.setText(ownerInfo)
         self.ownerInfoSplash.move(0, 880)
         self.ownerInfoSplash.setMinimumHeight(200)
         self.lblMsg = QLabel(self)
-        self.lblMsg.setStyleSheet(MESSAGE_LABLE)
+        self.lblMsg.setStyleSheet(styles.MESSAGE_LABLE)
         self.lblMsg.setAlignment(Qt.AlignCenter)
         self.lblMsg.setVisible(False)
         self.lblMsg.clear()
@@ -136,9 +143,9 @@ class MainWin(QMainWindow):
         self.bodyPart = ''
         self.case = 'I'
         self.cooling = 0
-        self.energy = MIN_ENRGEY
-        self.pulseWidth = MIN_PULSE_WIDTH
-        self.frequency = MIN_FREQUENCY
+        self.energy = case.MIN_ENRGEY
+        self.pulseWidth = case.MIN_PULSE_WIDTH
+        self.frequency = case.MIN_FREQUENCY
         self.currentCounter = 0
         self.receivedTime = ()
         self.startupEditTime = False
@@ -148,33 +155,33 @@ class MainWin(QMainWindow):
         self.receivingSensorsData = True
         self.calibrationPageActive = False
         self.musicFiles = []
-        self.po = PowerOption(self.mainPage)
+        self.po = promotions.PowerOption(self.mainPage)
         self.po.shutdown.connect(lambda: self.playShutdown('powerOff'))
         self.po.restart.connect(lambda: self.playShutdown('restart'))
         xpos = 1920 - self.po.size().width()
         ypos = self.btnPowerOption.iconSize().height() + 20
         self.po.move(xpos , ypos)
-        self.energyWidget = Parameter(self.laserPage)
+        self.energyWidget = promotions.Parameter(self.laserPage)
         self.energyWidget.move(230, 30)
         self.energyWidget.setParameter('Energy')
-        self.frequencyWidget = Parameter(self.laserPage)
+        self.frequencyWidget = promotions.Parameter(self.laserPage)
         self.frequencyWidget.move(230, 430)
         self.frequencyWidget.setParameter('Frequency')
-        self.pulseWidthWidget = Parameter(self.laserPage)
+        self.pulseWidthWidget = promotions.Parameter(self.laserPage)
         self.pulseWidthWidget.move(1110, 30)
         self.pulseWidthWidget.setParameter('Pulse Width')
         self.pulseWidthWidget.setEnabled(False)
-        self.coolingWidget = Parameter(self.laserPage)
+        self.coolingWidget = promotions.Parameter(self.laserPage)
         self.coolingWidget.move(1110, 430)
         self.coolingWidget.setParameter('Cooling')
         self.coolingWidget.setValue(self.cooling)
-        self.counterWidget = CounterParameter(self.laserPage)
+        self.counterWidget = promotions.CounterParameter(self.laserPage)
         self.counterWidget.move(670, 230)
         self.counterWidget.setParameter('Counter')
         self.counterWidget.setValue(self.currentCounter)
-        self.skinGradeWidget = SkinGrade(self.laserPage)
+        self.skinGradeWidget = promotions.SkinGrade(self.laserPage)
         self.skinGradeWidget.setGeometry(-1, 60, 200, 800)
-        self.selectedBodyPart = SelectedBodyPart(self.laserPage)
+        self.selectedBodyPart = promotions.SelectedBodyPart(self.laserPage)
         self.selectedBodyPart.setGeometry(1600,650, 600, 600)
         self.updateSystemTime(edit=True)
         self.initHwTest()
@@ -185,15 +192,15 @@ class MainWin(QMainWindow):
         self.initTables()
         self.initTextboxes()
         self.changeTheme(self.configs['Theme'])
-        self.changeSliderColor(SLIDER_GB, SLIDER_GW)
+        self.changeSliderColor(styles.SLIDER_GB, styles.SLIDER_GW)
         self.loadLocksTable()
         self.bodyPartsSignals()
         self.keyboardSignals()
         self.casesSignals()
         self.initMusics()
         self.checkUUID()
-        readTime()
-        icon = QPixmap(SPARK_ICON)
+        communication.readTime()
+        icon = QPixmap(paths.SPARK_ICON)
         self.lblSpark.setPixmap(icon.scaled(130, 130))
         self.lblSpark.setVisible(False)
         self.lblLasing.setVisible(False)
@@ -207,15 +214,15 @@ class MainWin(QMainWindow):
         self.chbTouchSound.setChecked(self.configs['TouchSound'])
         self.chbTouchSound.toggled.connect(self.setTouchSound)
         self.setTemp(0)
-        op=QGraphicsOpacityEffect(self)
+        op = QGraphicsOpacityEffect(self)
         op.setOpacity(0.8) 
         self.musicFrame.setGraphicsEffect(op)
-        self.lblDemo = Label(self.mainPage)
+        self.lblDemo = promotions.Label(self.mainPage)
         self.lblDemo.setGeometry(170, 200, 700, 700)
-        self.lblDemo.setPixmap(QPixmap(LASER_LOGO))
+        self.lblDemo.setPixmap(QPixmap(paths.LASER_LOGO))
         self.txtFSdays.setText(str(self.configs['FutureSessionsDays']))
         mixer.Channel(0).set_volume(0.5)
-        mixer.Channel(0).play(mixer.Sound(STARTUP_SOUND))
+        mixer.Channel(0).play(mixer.Sound(paths.STARTUP_SOUND))
 
     def onSplashClicked(self):
         self.stackedWidget.setCurrentWidget(self.mainPage) 
@@ -223,7 +230,7 @@ class MainWin(QMainWindow):
     def setTouchSound(self, active):
         self.configs['TouchSound'] = active
         if not self.saveConfigs():
-            self.setMessageLabel(TEXT['saveConfigError'][self.langIndex], 4)
+            self.setMessageLabel(lang.TEXT['saveConfigError'][self.langIndex], 4)
 
     def playTouchSound(self, sound):
         if self.configs['TouchSound']:
@@ -256,7 +263,7 @@ class MainWin(QMainWindow):
         self.hwStackedWidget.setSlideTransition(checked)
         self.configs['SlideTransition'] = checked
         if not self.saveConfigs():
-            self.setMessageLabel(TEXT['saveConfigError'][self.langIndex], 4)
+            self.setMessageLabel(lang.TEXT['saveConfigError'][self.langIndex], 4)
 
     def initTimers(self):        
         self.incDaysTimer = QTimer()
@@ -292,7 +299,7 @@ class MainWin(QMainWindow):
 
     def initTables(self):
         for tbl in self.findChildren(QTableWidget):
-            op=QGraphicsOpacityEffect(self)
+            op = QGraphicsOpacityEffect(self)
             op.setOpacity(0.8)
             tbl.verticalHeader().setDefaultSectionSize(75)                
             tbl.horizontalHeader().setFixedHeight(60)                
@@ -311,7 +318,7 @@ class MainWin(QMainWindow):
         self.btnSort.clicked.connect(self.sortUsers)
         self.btnAdss.clicked.connect(self.playAdssDemo)
         self.btnEndSession.clicked.connect(lambda: self.setNextSession('lazer'))
-        self.btnEndSession.clicked.connect(lambda: enterPage(MAIN_PAGE))
+        self.btnEndSession.clicked.connect(lambda: communication.enterPage(communication.MAIN_PAGE))
         self.btnPowerOption.clicked.connect(lambda: self.showPowerOptions('show'))
         self.btnStartSession.clicked.connect(self.startSession)
         self.btnStartUserSession.clicked.connect(self.startSession)
@@ -321,7 +328,7 @@ class MainWin(QMainWindow):
         self.btnSystemLogs.clicked.connect(self.enterLogsPage)
         self.btnHwTesst.clicked.connect(lambda: self.hwStackedWidget.setCurrentWidget(self.hwTestPage))
         self.btnHwTesst.clicked.connect(self.hwPageChanged)
-        self.btnHwTesst.clicked.connect(lambda: enterPage(HARDWARE_TEST_PAGE))
+        self.btnHwTesst.clicked.connect(lambda: communication.enterPage(communication.HARDWARE_TEST_PAGE))
         self.btnMusic.clicked.connect(lambda: self.changeAnimation('horizontal'))
         self.btnMusic.clicked.connect(lambda: self.stackedWidget.setCurrentWidget(self.musicPage))
         self.btnBackMusic.clicked.connect(lambda: self.stackedWidget.setCurrentWidget(self.mainPage))
@@ -397,10 +404,10 @@ class MainWin(QMainWindow):
         self.btnStandByCalib.clicked.connect(lambda: self.setReady(False))
         self.btnUUIDEnter.clicked.connect(self.unlockUUID)
         self.btnHwinfo.clicked.connect(lambda: self.hwStackedWidget.setCurrentWidget(self.infoPage))
-        self.btnHwinfo.clicked.connect(lambda: self.enterSettingPage(REPORT))
+        self.btnHwinfo.clicked.connect(lambda: self.enterSettingPage(communication.REPORT))
         self.btnSystemLock.clicked.connect(lambda: self.hwStackedWidget.setCurrentWidget(self.lockSettingsPage))
         self.btnSystemLock.clicked.connect(self.hwPageChanged)
-        self.btnSystemLock.clicked.connect(lambda: lockPage(REPORT))
+        self.btnSystemLock.clicked.connect(lambda: communication.lockPage(communication.REPORT))
         self.btnCalibration.clicked.connect(self.enterCalibrationPage)
         self.btnAddLock.clicked.connect(self.addLock)
         self.btnResetLock.clicked.connect(self.clearLocksTabel)
@@ -408,7 +415,7 @@ class MainWin(QMainWindow):
         self.btnBackLaser.clicked.connect(lambda: self.stackedWidgetLaser.setCurrentWidget(self.bodyPartPage))
         self.btnBackLaser.clicked.connect(lambda: self.btnBackLaser.setVisible(False))
         self.btnBackLaser.clicked.connect(lambda: self.setReady(False))
-        self.btnBackLaser.clicked.connect(lambda: enterPage(BODY_PART_PAGE))
+        self.btnBackLaser.clicked.connect(lambda: communication.enterPage(communication.BODY_PART_PAGE))
         self.btnBackLaser.setVisible(False)
         self.btnUpdateFirmware.clicked.connect(self.startUpdateSystem)
         self.btnShowSplash.clicked.connect(self.showSplash)
@@ -421,14 +428,14 @@ class MainWin(QMainWindow):
         self.selectAllFlag = False
         self.btnLoop.clicked.connect(self.setLoopMusic)
         self.LoopMusicFlag = self.configs['LoopMusic']
-        self.btnColor1.setStyleSheet(BTN_COLOR1)
-        self.btnColor2.setStyleSheet(BTN_COLOR2)
-        self.btnColor3.setStyleSheet(BTN_COLOR3)
-        self.btnColor4.setStyleSheet(BTN_COLOR4)
-        self.btnTheme1.setStyleSheet(BTN_THEME1)
-        self.btnTheme2.setStyleSheet(BTN_THEME2)
-        self.btnTheme3.setStyleSheet(BTN_THEME3)
-        self.btnTheme4.setStyleSheet(BTN_THEME4)
+        self.btnColor1.setStyleSheet(styles.BTN_COLOR1)
+        self.btnColor2.setStyleSheet(styles.BTN_COLOR2)
+        self.btnColor3.setStyleSheet(styles.BTN_COLOR3)
+        self.btnColor4.setStyleSheet(styles.BTN_COLOR4)
+        self.btnTheme1.setStyleSheet(styles.BTN_THEME1)
+        self.btnTheme2.setStyleSheet(styles.BTN_THEME2)
+        self.btnTheme3.setStyleSheet(styles.BTN_THEME3)
+        self.btnTheme4.setStyleSheet(styles.BTN_THEME4)
         self.btnColor1.clicked.connect(lambda: self.changeTheme('C1'))
         self.btnColor2.clicked.connect(lambda: self.changeTheme('C2'))
         self.btnColor3.clicked.connect(lambda: self.changeTheme('C3'))
@@ -445,12 +452,12 @@ class MainWin(QMainWindow):
             'btnWaterflowCalib', 'txtTempCalib'
         ]
         keyboardButtons = list(chain(
-            getLayoutWidgets(self.keyboardRow1, QPushButton),
-            getLayoutWidgets(self.keyboardRow2, QPushButton),
-            getLayoutWidgets(self.keyboardRow3, QPushButton),
-            getLayoutWidgets(self.numRow1, QPushButton),
-            getLayoutWidgets(self.numRow2, QPushButton),
-            getLayoutWidgets(self.numRow3, QPushButton)
+            utility.getLayoutWidgets(self.keyboardRow1, QPushButton),
+            utility.getLayoutWidgets(self.keyboardRow2, QPushButton),
+            utility.getLayoutWidgets(self.keyboardRow3, QPushButton),
+            utility.getLayoutWidgets(self.numRow1, QPushButton),
+            utility.getLayoutWidgets(self.numRow2, QPushButton),
+            utility.getLayoutWidgets(self.numRow3, QPushButton)
         ))
         keyboardButtons.append(self.btnBackspace)
         keyboardButtons.append(self.btnReturn)
@@ -471,7 +478,7 @@ class MainWin(QMainWindow):
             elif btn.objectName() not in sensors:
                 btn.pressed.connect(lambda: self.playTouchSound('t'))       
 
-        buttons = getFrameWidgets(self.hwbtnsFrame, QPushButton)
+        buttons = utility.getFrameWidgets(self.hwbtnsFrame, QPushButton)
         for btn in buttons:
             if btn.objectName() == 'btnSaveHw':
                 continue
@@ -488,8 +495,8 @@ class MainWin(QMainWindow):
         self.txtPassword.returnPressed.connect(self.unlockLIC)
         self.txtPassUUID.returnPressed.connect(self.unlockUUID)
         
-        for txt in self.findChildren(LineEdit):
-            if isinstance(txt, LineEdit):
+        for txt in self.findChildren(promotions.LineEdit):
+            if isinstance(txt, promotions.LineEdit):
                 txt.fIn.connect(lambda: self.setKeyboard('show'))
 
         self.txtOwnerInfo.setText(self.configs['OwnerInfo'])
@@ -519,18 +526,18 @@ class MainWin(QMainWindow):
         self.txtSearchMusic.textChanged.connect(self.searchMusic)
 
     def initHwTest(self):
-        self.handPiece = Relay(self.btnHandpiece, self.btnPassHP, self.btnFailHP, 0)
-        self.radiator = Relay(self.btnRadiator, self.btnPassRad, self.btnFailRad, 1)
-        self.laserPower = Relay(self.btnLaserPower, self.btnPassLP, self.btnFailLP, 2)
-        self.airCooling = Relay(self.btnAirCooling, self.btnPassAC, self.btnFailAC, 3)
-        self.reservedRelay = Relay(self.btnReserved, self.btnPassRes, self.btnFailRes, 4)
-        self.driverCurrent = DriverCurrent(self.btnDriverCurrentStart, self.widget, 6)
-        self.flowMeter = SensorTest(txt=self.txtFlowMeter, unit='Lit/min')
-        self.waterTempSensor = SensorTest(txt=self.txtWaterTempSensor, unit='°C')
-        self.handpieceTemp = SensorTest(txt=self.txtHandpieceTemp, unit='°C')
-        self.airTempSensor = SensorTest(txt=self.txtAirTempSensor, unit='°C')
-        self.interLockTest = SensorTest(btnOk=self.btnInterLockPass, btnNotOk=self.btnInterLockFail)
-        self.waterLevelTest = SensorTest(btnOk=self.btnWaterLevelPass, btnNotOk=self.btnWaterLevelFail)
+        self.handPiece = promotions.Relay(self.btnHandpiece, self.btnPassHP, self.btnFailHP, 0)
+        self.radiator = promotions.Relay(self.btnRadiator, self.btnPassRad, self.btnFailRad, 1)
+        self.laserPower = promotions.Relay(self.btnLaserPower, self.btnPassLP, self.btnFailLP, 2)
+        self.airCooling = promotions.Relay(self.btnAirCooling, self.btnPassAC, self.btnFailAC, 3)
+        self.reservedRelay = promotions.Relay(self.btnReserved, self.btnPassRes, self.btnFailRes, 4)
+        self.driverCurrent = promotions.DriverCurrent(self.btnDriverCurrentStart, self.widget, 6)
+        self.flowMeter = promotions.SensorTest(txt=self.txtFlowMeter, unit='Lit/min')
+        self.waterTempSensor = promotions.SensorTest(txt=self.txtWaterTempSensor, unit='°C')
+        self.handpieceTemp = promotions.SensorTest(txt=self.txtHandpieceTemp, unit='°C')
+        self.airTempSensor = promotions.SensorTest(txt=self.txtAirTempSensor, unit='°C')
+        self.interLockTest = promotions.SensorTest(btnOk=self.btnInterLockPass, btnNotOk=self.btnInterLockFail)
+        self.waterLevelTest = promotions.SensorTest(btnOk=self.btnWaterLevelPass, btnNotOk=self.btnWaterLevelFail)
 
         self.serialC.handPiece.connect(self.handPiece.setTests)
         self.serialC.radiator.connect(self.radiator.setTests)
@@ -555,9 +562,9 @@ class MainWin(QMainWindow):
     
     def setDacSlidrColor(self):
         if self.configs['Theme'] in ['C1', 'C2', 'C4']:
-            self.dacSlider.setStyleSheet(DAC_SLIDER_B_CHANGED)
+            self.dacSlider.setStyleSheet(styles.DAC_SLIDER_B_CHANGED)
         else:
-            self.dacSlider.setStyleSheet(DAC_SLIDER_W_CHANGED)
+            self.dacSlider.setStyleSheet(styles.DAC_SLIDER_W_CHANGED)
 
     def setDac(self, operation='set', value=0):
         if operation == 'inc':
@@ -570,18 +577,18 @@ class MainWin(QMainWindow):
         self.lblDacValue.setText(f"{self.dacSlider.value()}")
 
     def sendDacVoltage(self):
-        sendPacket(
+        communication.sendPacket(
             {'dacVolt': 7},
             {'dacVolt': str(self.dacSlider.value())},
-            HARDWARE_TEST_PAGE, 
-            WRITE
+            communication.HARDWARE_TEST_PAGE, 
+            communication.WRITE
         )
-        self.changeSliderColor(SLIDER_GB, SLIDER_GW)  
+        self.changeSliderColor(styles.SLIDER_GB, styles.SLIDER_GW)  
 
     def playAdssDemo(self):
         self.changeAnimation('vertical')
         self.setKeyboard('hide')
-        self.adssMedia.setMedia(QMediaContent(QUrl.fromLocalFile(ADSS_DEMO)))
+        self.adssMedia.setMedia(QMediaContent(QUrl.fromLocalFile(paths.ADSS_DEMO)))
         self.adssMedia.play()
         index = self.stackedWidget.indexOf(self.adssPage)
         self.stackedWidget.setCurrentIndex(index)
@@ -631,14 +638,14 @@ class MainWin(QMainWindow):
                 'frequency': self.frequency, 
                 'ready-standby': 'Ready' if self.ready else 'StandBy'
             } 
-        laserPage(fields) # testing ...
+        communication.laserPage(fields) # testing ...
         self.txtSpotSizeCalib.setText(self.configs['SpotSizeArea'])
         self.setCurrentCoeff(self.sliderEnergyCalib.value() * 10)
         self.monitorSensorsTimer.start(500)
         self.monitorReceivingSensors.start(3000)
     
     def setCurrentCoeff(self, value):
-        index, interval = getCoeffIndex(value, interval = True)
+        index, interval = utility.getCoeffIndex(value, interval = True)
         self.txtCurrentCoeff.setText(f"{interval} → {round(self.coefficients[index], 2)}")
         
     def applyCalibrationCoeffs(self):
@@ -651,17 +658,17 @@ class MainWin(QMainWindow):
             if not 0.8 <= ratio <= 1.2:
                 raise Exception('out of range')
 
-            index = getCoeffIndex(energy)
+            index = utility.getCoeffIndex(energy)
             self.coefficients[index] = ratio
             self.setCurrentCoeff(energy)
 
-            if not saveCoefficients(self.coefficients):
-                self.setMessageLabel(TEXT['saveCoeffError'][self.langIndex], 4)
+            if not utility.saveCoefficients(self.coefficients):
+                self.setMessageLabel(lang.TEXT['saveCoeffError'][self.langIndex], 4)
             else:
-                self.setMessageLabel(TEXT['Coeff'][self.langIndex] + str(round(ratio, 2)), 4)
+                self.setMessageLabel(lang.TEXT['Coeff'][self.langIndex] + str(round(ratio, 2)), 4)
 
         except Exception:
-            self.setMessageLabel(TEXT['CoeffError'][self.langIndex], 3)
+            self.setMessageLabel(lang.TEXT['CoeffError'][self.langIndex], 3)
                
     def hwPageChanged(self):
         if self.calibrationPageActive:
@@ -677,64 +684,64 @@ class MainWin(QMainWindow):
         inc = QIcon()
         dec = QIcon()
         if theme in ['C1', 'C2', 'C4']:
-            self.sliderEnergyCalib.setStyleSheet(SLIDER_GB)
-            self.sliderFrequencyCalib.setStyleSheet(SLIDER_GB)
-            self.sliderPulseWidthCalib.setStyleSheet(SLIDER_DISABLED_GB)
-            self.dacSlider.setStyleSheet(SLIDER_GB)
-            inc.addPixmap(QPixmap(INC_BLACK))
-            dec.addPixmap(QPixmap(DEC_BLACK))
+            self.sliderEnergyCalib.setStyleSheet(styles.SLIDER_GB)
+            self.sliderFrequencyCalib.setStyleSheet(styles.SLIDER_GB)
+            self.sliderPulseWidthCalib.setStyleSheet(styles.SLIDER_DISABLED_GB)
+            self.dacSlider.setStyleSheet(styles.SLIDER_GB)
+            inc.addPixmap(QPixmap(paths.INC_BLACK))
+            dec.addPixmap(QPixmap(paths.DEC_BLACK))
         else:          
-            self.sliderEnergyCalib.setStyleSheet(SLIDER_GW)           
-            self.sliderFrequencyCalib.setStyleSheet(SLIDER_GW)
-            self.sliderPulseWidthCalib.setStyleSheet(SLIDER_DISABLED_GW)
-            self.dacSlider.setStyleSheet(SLIDER_GW)
-            inc.addPixmap(QPixmap(INC_BLUE))
-            dec.addPixmap(QPixmap(DEC_BLUE))
+            self.sliderEnergyCalib.setStyleSheet(styles.SLIDER_GW)           
+            self.sliderFrequencyCalib.setStyleSheet(styles.SLIDER_GW)
+            self.sliderPulseWidthCalib.setStyleSheet(styles.SLIDER_DISABLED_GW)
+            self.dacSlider.setStyleSheet(styles.SLIDER_GW)
+            inc.addPixmap(QPixmap(paths.INC_BLUE))
+            dec.addPixmap(QPixmap(paths.DEC_BLUE))
 
         self.btnDecDac.setIcon(dec)
         self.btnIncDac.setIcon(inc)
 
         if theme == 'T1':
-            self.centralWidget().setStyleSheet(THEME1)
+            self.centralWidget().setStyleSheet(styles.THEME1)
         elif theme == 'T2':
-            self.centralWidget().setStyleSheet(THEME2)
+            self.centralWidget().setStyleSheet(styles.THEME2)
         elif theme == 'T3':
-            self.centralWidget().setStyleSheet(THEME3)
+            self.centralWidget().setStyleSheet(styles.THEME3)
         elif theme == 'T4':
-            self.centralWidget().setStyleSheet(THEME4)
+            self.centralWidget().setStyleSheet(styles.THEME4)
         elif theme == 'C1':
-            self.centralWidget().setStyleSheet(COLOR1)
+            self.centralWidget().setStyleSheet(styles.COLOR1)
         elif theme == 'C2':
-            self.centralWidget().setStyleSheet(COLOR2)
+            self.centralWidget().setStyleSheet(styles.COLOR2)
         elif theme == 'C3':
-            self.centralWidget().setStyleSheet(COLOR3)
+            self.centralWidget().setStyleSheet(styles.COLOR3)
         elif theme == 'C4':
-            self.centralWidget().setStyleSheet(COLOR4)
+            self.centralWidget().setStyleSheet(styles.COLOR4)
 
         if theme.startswith('T') or theme == 'C3':
-            self.po.setStyleSheet(POWER_OPTION_L)
+            self.po.setStyleSheet(styles.POWER_OPTION_L)
         else:
-            self.po.setStyleSheet(POWER_OPTION_D)
+            self.po.setStyleSheet(styles.POWER_OPTION_D)
 
         self.configs['Theme'] = theme
         if not self.saveConfigs():
-            self.setMessageLabel(TEXT['saveConfigError'][self.langIndex], 4)
+            self.setMessageLabel(lang.TEXT['saveConfigError'][self.langIndex], 4)
 
     def setOwnerInfo(self, text):
         self.ownerInfoSplash.setText(text)
         self.ownerInfoSplash.adjustSize()
         self.configs['OwnerInfo'] = text
         if not self.saveConfigs():
-            self.setMessageLabel(TEXT['saveConfigError'][self.langIndex], 4)
+            self.setMessageLabel(lang.TEXT['saveConfigError'][self.langIndex], 4)
 
         if not text:
             self.ownerInfoSplash.setVisible(False)
         else:
             self.ownerInfoSplash.setVisible(True)
-        if text and isFarsi(text):
-            self.ownerInfoSplash.setStyleSheet(OWNER_INFO_STYLE_FA)
+        if text and utility.isFarsi(text):
+            self.ownerInfoSplash.setStyleSheet(styles.OWNER_INFO_STYLE_FA)
         else:
-            self.ownerInfoSplash.setStyleSheet(OWNER_INFO_STYLE_EN)
+            self.ownerInfoSplash.setStyleSheet(styles.OWNER_INFO_STYLE_EN)
 
     def showSplash(self):
         self.setKeyboard('hide')
@@ -749,7 +756,7 @@ class MainWin(QMainWindow):
         self.receivedTime += clock + (0,)
         try:
             if not self.startupEditTime:
-                setSystemTime(self.receivedTime)
+                utility.setSystemTime(self.receivedTime)
                 self.startupEditTime = True
                 nextDate = jdatetime.datetime.now() + jdatetime.timedelta(120) 
                 self.txtLockYear.setText(str(nextDate.year))
@@ -757,11 +764,11 @@ class MainWin(QMainWindow):
                 self.txtLockDay.setText(str(nextDate.day)) 
                 self.checkLIC()
         except Exception as e:
-            log('Startup Setting Time', str(e) + '\n')
+            utility.log('Startup Setting Time', str(e) + '\n')
             
     def playShutdown(self, i):
         mixer.Channel(0).set_volume(0.5)
-        mixer.Channel(0).play(mixer.Sound(SHUTDOWN_SOUND))
+        mixer.Channel(0).play(mixer.Sound(paths.SHUTDOWN_SOUND))
         self.musicSound.stop()
         self.setKeyboard('hide')
         if i == 'powerOff':
@@ -775,33 +782,33 @@ class MainWin(QMainWindow):
         self.stackedWidget.setCurrentWidget(self.shutdownPage)
 
     def exit(self):
-        log('Exit Shortcut', 'Shortcut activated. Exiting from UI...\n')
-        enterPage(SHUTDONW_PAGE)
+        utility.log('Exit Shortcut', 'Shortcut activated. Exiting from UI...\n')
+        communication.enterPage(communication.SHUTDONW_PAGE)
         self.serialC.closePort()
-        gpioCleanup()
+        communication.gpioCleanup()
         self.close()
 
     def powerOff(self):
-        enterPage(SHUTDONW_PAGE)
+        communication.enterPage(communication.SHUTDONW_PAGE)
         self.serialC.closePort()
-        gpioCleanup()
-        if platform.system() == 'Windows':
+        communication.gpioCleanup()
+        if utility.platform.system() == 'Windows':
             self.close()
         else:
             os.system('poweroff')
         
     def restart(self):
-        enterPage(SHUTDONW_PAGE)
+        communication.enterPage(communication.SHUTDONW_PAGE)
         self.serialC.closePort()
-        gpioCleanup()
-        if platform.system() == 'Windows':
+        communication.gpioCleanup()
+        if utility.platform.system() == 'Windows':
             self.close()
         else:
             os.system('reboot')
 
     def updateGuiResult(self, result):
         if result == 'Done GUI':
-            log('Update Firmware', 'GUI successfully updated.\n')
+            utility.log('Update Firmware', 'GUI successfully updated.\n')
             for i in range(5, -1, -1):
                 self.setMessageLabel(f'Your system will restart in {i} seconds...')
                 QApplication.processEvents()
@@ -815,7 +822,7 @@ class MainWin(QMainWindow):
         self.setMessageLabel(status, 100)
         if status == 'Rebooting Control System ...':
             self.btnUpdateFirmware.setDisabled(False)
-            log('Update Firmware', 'Firmware successfully updated.')
+            utility.log('Update Firmware', 'Firmware successfully updated.')
             self.setMessageLabel('Rebooting Control System ...',  6)
 
     def startUpdateSystem(self):
@@ -878,26 +885,26 @@ class MainWin(QMainWindow):
         numOfLocks = len(self.configs['Locks'])
 
         if numOfLocks == 3:
-            self.setMessageLabel(TEXT['maxLock'][self.langIndex])
+            self.setMessageLabel(lang.TEXT['maxLock'][self.langIndex])
             return
 
-        if getDiff(date) <= -1:
-            self.setMessageLabel(TEXT['passedDate'][self.langIndex])
+        if utility.getDiff(date) <= -1:
+            self.setMessageLabel(lang.TEXT['passedDate'][self.langIndex])
             return
 
         for lock in self.configs['Locks']:
-            if (date - toJalali(lock.date)).days <= 0:
-                self.setMessageLabel(TEXT['anyLockBefor'][self.langIndex])
+            if (date - utility.toJalali(lock.date)).days <= 0:
+                self.setMessageLabel(lang.TEXT['anyLockBefor'][self.langIndex])
                 return
         
         license = self.configs['License'][f'{numOfLocks + 1}']
         lock = Lock(date.togregorian(), license)
         self.configs['Locks'].append(lock)
         if not self.saveConfigs():
-            self.setMessageLabel(TEXT['saveConfigError'][self.langIndex])
+            self.setMessageLabel(lang.TEXT['saveConfigError'][self.langIndex])
 
-        info = f"Lock license: {license}\nLock date: {toJalali(lock.date).strftime('%Y-%m-%d')}\n"
-        log('Lock added', info)
+        info = f"Lock license: {license}\nLock date: {utility.toJalali(lock.date).strftime('%Y-%m-%d')}\n"
+        utility.log('Lock added', info)
         nextDate = date + jdatetime.timedelta(120) 
         self.txtLockYear.setText(str(nextDate.year))
         self.txtLockMonth.setText(str(nextDate.month))
@@ -909,47 +916,47 @@ class MainWin(QMainWindow):
         locks = self.configs['Locks']
         self.tableLock.setRowCount(len(locks))
         for i, lock in enumerate(locks):
-            date = TableWidgetItem(str(toJalali(lock.date).date()))
+            date = promotions.TableWidgetItem(str(utility.toJalali(lock.date).date()))
             self.tableLock.setItem(i, 0, date)
-            diff = getDiff(toJalali(lock.date))
+            diff = utility.getDiff(utility.toJalali(lock.date))
             status = ''
             if diff == 0:
-                status = TEXT['today'][self.langIndex]
+                status = lang.TEXT['today'][self.langIndex]
             elif diff == -1:
-                status = TEXT['1dayPassed'][self.langIndex]
+                status = lang.TEXT['1dayPassed'][self.langIndex]
             elif diff < -1:
-                status = f'{abs(diff)} {TEXT["nDayPassed"][self.langIndex]}'
+                status = f'{abs(diff)} {lang.TEXT["nDayPassed"][self.langIndex]}'
             elif diff == 1:
-                status = TEXT['1dayleft'][self.langIndex]
+                status = lang.TEXT['1dayleft'][self.langIndex]
             else:
-                status = f'{diff} {TEXT["nDayLeft"][self.langIndex]}'
+                status = f'{diff} {lang.TEXT["nDayLeft"][self.langIndex]}'
 
-            status = TableWidgetItem(status)
+            status = promotions.TableWidgetItem(status)
             self.tableLock.setItem(i, 1, status)
-            paid = TableWidgetItem(
-                TEXT['yes'][self.langIndex] if lock.paid else TEXT['no'][self.langIndex]
+            paid = promotions.TableWidgetItem(
+                lang.TEXT['yes'][self.langIndex] if lock.paid else lang.TEXT['no'][self.langIndex]
             )
             self.tableLock.setItem(i, 2, paid)
             
     def clearLocksTabel(self):
         self.configs['Locks'] = []
         if not self.saveConfigs():
-            self.setMessageLabel(TEXT['saveConfigError'][self.langIndex])
+            self.setMessageLabel(lang.TEXT['saveConfigError'][self.langIndex])
 
-        log('Lock reset', 'Lock table cleared.\n')
+        utility.log('Lock reset', 'Lock table cleared.\n')
         self.updateSystemTime(edit=True)
         self.loadLocksTable()
 
     def unlockUUID(self):
         user_pass = self.txtPassUUID.text().upper()
-        hwid = getID()
+        hwid = utility.getID()
         hwid += '@mohammaad_haji'
         
         if hashlib.sha256(hwid.encode()).hexdigest()[:10].upper() == user_pass:
             index = self.stackedWidgetLock.indexOf(self.enterLaserPage)
             self.stackedWidgetLock.setCurrentIndex(index)
             
-            with open(COPY_RIGHT_PASS, 'w') as f:
+            with open(paths.COPY_RIGHT_PASS, 'w') as f:
                 f.write(user_pass)
             
             self.saveConfigs()
@@ -957,15 +964,15 @@ class MainWin(QMainWindow):
         else:
             self.txtPassUUID.setFocus()
             self.txtPassUUID.selectAll()
-            self.setMessageLabel(TEXT['wrongPass'][self.langIndex], 3)
+            self.setMessageLabel(lang.TEXT['wrongPass'][self.langIndex], 3)
 
     def checkUUID(self):
-        hwid = getID()
+        hwid = utility.getID()
         self.txtUUID.setText(hwid)
         hwid += '@mohammaad_haji'
         password = ''
-        if os.path.isfile(COPY_RIGHT_PASS):
-            with open(COPY_RIGHT_PASS, 'r') as f:
+        if os.path.isfile(paths.COPY_RIGHT_PASS):
+            with open(paths.COPY_RIGHT_PASS, 'r') as f:
                 password = f.read()
 
         if not hashlib.sha256(hwid.encode()).hexdigest()[:10].upper() == password:
@@ -975,8 +982,8 @@ class MainWin(QMainWindow):
     def getLocks(self):
         locks = []
         for lock in self.configs['Locks']:
-            date = toJalali(lock.date)
-            if not lock.paid and getDiff(date) <= 0:
+            date = utility.toJalali(lock.date)
+            if not lock.paid and utility.getDiff(date) <= 0:
                 locks.append(lock)
 
         locks.sort(key=lambda x: x.date)
@@ -1000,7 +1007,7 @@ class MainWin(QMainWindow):
             self.stackedWidgetLock.setCurrentIndex(index)
             self.checkUUID()
         else:
-            self.setMessageLabel(TEXT['wrongPass'][self.langIndex], 3)
+            self.setMessageLabel(lang.TEXT['wrongPass'][self.langIndex], 3)
             self.txtPassword.setFocus()
             self.txtPassword.selectAll()
 
@@ -1016,12 +1023,12 @@ class MainWin(QMainWindow):
         password = self.txtHwPass.text()
         self.hwStackedWidget.setCurrentIndex(0)
         txts = chain(
-            getLayoutWidgets(self.prodGridLayout, QLineEdit),
-            getLayoutWidgets(self.laserGridLayout, QLineEdit),
-            getLayoutWidgets(self.driverGridLayout, QLineEdit),
-            getLayoutWidgets(self.embeddGridLayout, QLineEdit)
+            utility.getLayoutWidgets(self.prodGridLayout, QLineEdit),
+            utility.getLayoutWidgets(self.laserGridLayout, QLineEdit),
+            utility.getLayoutWidgets(self.driverGridLayout, QLineEdit),
+            utility.getLayoutWidgets(self.embeddGridLayout, QLineEdit)
         )
-        self.btnHwinfo.setStyleSheet(SETTINGS_MENU_SELECTED)
+        self.btnHwinfo.setStyleSheet(styles.SETTINGS_MENU_SELECTED)
         if password == HW_PAGE_ADMIN_PASSWORD:
             for txt in txts:
                 txt.setReadOnly(False)
@@ -1046,7 +1053,7 @@ class MainWin(QMainWindow):
             self.txtHwPass.clear()
             self.systemTimeTimer.start(1000)
             self.stackedWidgetSettings.setCurrentWidget(self.hWPage)
-            self.enterSettingPage(REPORT)
+            self.enterSettingPage(communication.REPORT)
 
         elif password == HW_PAGE_USER_PASSWORD:
             for txt in txts:
@@ -1062,26 +1069,26 @@ class MainWin(QMainWindow):
             self.lblRpiVersion.setVisible(False)
             self.txtHwPass.clear()
             self.stackedWidgetSettings.setCurrentWidget(self.hWPage)
-            self.enterSettingPage(REPORT)
+            self.enterSettingPage(communication.REPORT)
             
         else:
-            self.txtHwPass.setStyleSheet(TXT_HW_WRONG_PASS)
+            self.txtHwPass.setStyleSheet(styles.TXT_HW_WRONG_PASS)
             self.txtHwPass.selectAll()
             self.txtHwPass.setFocus()
             self.hwWrongPassTimer.start(4000)
 
     def resetHardwareWrongPass(self):
         self.hwWrongPassTimer.stop()
-        self.txtHwPass.setStyleSheet(TXT_HW_PASS)
+        self.txtHwPass.setStyleSheet(styles.TXT_HW_PASS)
 
     def resetCounterWrongPass(self):
         self.resetCounterPassTimer.stop()
-        self.txtResetCounterPass.setStyleSheet(TXT_RESET_COUNTER_PASS)
+        self.txtResetCounterPass.setStyleSheet(styles.TXT_RESET_COUNTER_PASS)
 
     def readHwInfo(self):
-        self.txtOsSpecification.setText(getOS())
-        self.txtRpiVersion.setText(getRPiModel())
-        self.txtMonitor.setText(monitorInfo())
+        self.txtOsSpecification.setText(utility.getOS())
+        self.txtRpiVersion.setText(utility.getRPiModel())
+        self.txtMonitor.setText(utility.monitorInfo())
         self.txtSerialNumber.setText(self.configs['SerialNumber'])                
         self.txtLaserDiodeEnergy.setText(self.configs['LaserDiodeEnergy'])                
         self.txtLaserBarType.setText(self.configs['LaserBarType'])
@@ -1118,20 +1125,20 @@ class MainWin(QMainWindow):
                 second = jdatetime.datetime.now().second
                 milisecond = 0
                 time = (year, month, day, hour, minute, second, milisecond)
-                setSystemTime(time)
+                utility.setSystemTime(time)
                 dateAfter120 = jdatetime.datetime.now() + jdatetime.timedelta(120) 
                 self.txtLockYear.setText(str(dateAfter120.year))
                 self.txtLockMonth.setText(str(dateAfter120.month))
                 self.txtLockDay.setText(str(dateAfter120.day)) 
-                lockPage(WRITE)
+                communication.lockPage(communication.WRITE)
                 self.loadLocksTable()
             except Exception as e:
                 print(e)
-                log('Setting Time', str(e) + '\n')
-                self.setMessageLabel(TEXT['systemTimeStatusError'][self.langIndex], 4)
+                utility.log('Setting Time', str(e) + '\n')
+                self.setMessageLabel(lang.TEXT['systemTimeStatusError'][self.langIndex], 4)
                 return
 
-            self.setMessageLabel(TEXT['systemTimeStatus'][self.langIndex], 3)
+            self.setMessageLabel(lang.TEXT['systemTimeStatus'][self.langIndex], 3)
 
         
         index = self.hwStackedWidget.indexOf(self.infoPage)
@@ -1146,20 +1153,20 @@ class MainWin(QMainWindow):
             self.configs['ProductionDate'] = self.txtProductionDate.text()
             self.configs['GuiVersion'] = self.txtGuiVersion.text()
             self.configs['SpotSizeArea'] = self.txtSpotSize.text() 
-            self.enterSettingPage(WRITE)
+            self.enterSettingPage(communication.WRITE)
 
             if not self.saveConfigs():
-                self.setMessageLabel(TEXT['saveConfigError'][self.langIndex], 4)
+                self.setMessageLabel(lang.TEXT['saveConfigError'][self.langIndex], 4)
             else:
-                self.setMessageLabel(TEXT['saveHw'][self.langIndex], 3)
+                self.setMessageLabel(lang.TEXT['saveHw'][self.langIndex], 3)
     
     def settingsMenuSelected(self, selectedBtn):
         def wrapper():
-            buttons = getFrameWidgets(self.hwbtnsFrame, QPushButton)
+            buttons = utility.getFrameWidgets(self.hwbtnsFrame, QPushButton)
             for btn in buttons:
                 btn.setStyleSheet('')
             if not selectedBtn == 'back':
-                selectedBtn.setStyleSheet(SETTINGS_MENU_SELECTED)
+                selectedBtn.setStyleSheet(styles.SETTINGS_MENU_SELECTED)
 
         return wrapper
 
@@ -1181,7 +1188,7 @@ class MainWin(QMainWindow):
             'rpi': self.txtRpiVersion.text(),
             'SpotSize': self.txtSpotSize.text()
         }
-        settingsPage(fieldValues, cmdType)
+        communication.settingsPage(fieldValues, cmdType)
 
     def resetTotalShot(self):
         if self.logingSettingAdmin:
@@ -1192,13 +1199,13 @@ class MainWin(QMainWindow):
             logText = 'The counter was reset by the user.\n'
         
         logText += 'Counter value: ' + str(self.configs['TotalShotCounter']) + ' --> 0\n'
-        log('Reset Counter', logText)
+        utility.log('Reset Counter', logText)
             
         self.txtTotalShotCounter.setText(text)
 
         self.configs['TotalShotCounter'] = 0
         if not self.saveConfigs():
-            self.setMessageLabel(TEXT['saveConfigError'][self.langIndex], 4)
+            self.setMessageLabel(lang.TEXT['saveConfigError'][self.langIndex], 4)
 
     def addMusics(self, paths):
         self.musicFiles = paths
@@ -1209,7 +1216,7 @@ class MainWin(QMainWindow):
             name = os.path.basename(path)
             rowPosition = self.tableMusic.rowCount()
             self.tableMusic.insertRow(rowPosition)
-            item = QTableWidgetItem(name)
+            item = QPropertyAnimation(name)
             item.setTextAlignment(Qt.AlignLeft | Qt.AlignVCenter)
             self.tableMusic.setItem(rowPosition, 0, item)
 
@@ -1239,12 +1246,12 @@ class MainWin(QMainWindow):
         self.positionSliderMusic.setRange(0, 0)
         self.loopIco = QIcon()
         self.singleIco = QIcon()
-        self.loopIco.addPixmap(QPixmap(LOOP_MUSIC_ICON))
-        self.singleIco.addPixmap(QPixmap(SINGLE_MUSIC_ICON))
+        self.loopIco.addPixmap(QPixmap(paths.LOOP_MUSIC_ICON))
+        self.singleIco.addPixmap(QPixmap(paths.SINGLE_MUSIC_ICON))
         self.playIco = QIcon()
         self.pauseIco = QIcon()
-        self.playIco.addPixmap(QPixmap(PLAY_ICON))
-        self.pauseIco.addPixmap(QPixmap(PAUSE_ICON))
+        self.playIco.addPixmap(QPixmap(paths.PLAY_ICON))
+        self.pauseIco.addPixmap(QPixmap(paths.PAUSE_ICON))
         if self.LoopMusicFlag:
             self.btnLoop.setIcon(self.loopIco)
             self.playlist.setPlaybackMode(QMediaPlaylist.Loop)
@@ -1254,17 +1261,17 @@ class MainWin(QMainWindow):
         self.btnLoop.setIconSize(QSize(80, 80))
 
     def intiTutorials(self):
-        self.player = Player(self.tutorialPage)
+        self.player = promotions.Player(self.tutorialPage)
         ax = (1920 - self.player.size().width()) // 2
         ay = (1080 - self.player.size().height()) // 2
         self.player.move(ax, ay)
-        films = os.listdir(TUTORIALS_DIR)
+        films = os.listdir(paths.TUTORIALS_DIR)
         if '.gitignore' in films:
             films.remove('.gitignore')
 
         rows = len(films) // 3 if len(films) % 3 == 0 else len(films) // 3 + 1
         if not rows:
-            lblTutorialMsg = QLabel(TEXT['lblTutorialMsg'][self.langIndex])
+            lblTutorialMsg = QLabel(lang.TEXT['lblTutorialMsg'][self.langIndex])
             lblTutorialMsg.setObjectName('lblTutorialMsg')
             lblTutorialMsg.setAlignment(Qt.AlignCenter)
             lblTutorialMsg.setFont(QFont('Arial', 20))
@@ -1331,11 +1338,11 @@ class MainWin(QMainWindow):
 
     def positionChangedMusic(self, position):
         self.positionSliderMusic.setValue(position)
-        current = '{:02d}:{:02d}:{:02d} / '.format(*calcPosition(position)) + self.musicLength
+        current = '{:02d}:{:02d}:{:02d} / '.format(*utility.calcPosition(position)) + self.musicLength
         self.lblLengthMusic.setText(current)
 
     def durationChangedMusic(self, duration):
-        self.musicLength = '{:02d}:{:02d}:{:02d}'.format(*calcPosition(duration))
+        self.musicLength = '{:02d}:{:02d}:{:02d}'.format(*utility.calcPosition(duration))
         self.lblLengthMusic.setText('00:00:00 / ' + self.musicLength)
         self.positionSliderMusic.setRange(0, duration)
 
@@ -1356,8 +1363,8 @@ class MainWin(QMainWindow):
                 return
 
             date = jdatetime.datetime(int(year), int(month), int(day))
-            if getDiff(date) <= -1:
-                self.setMessageLabel(TEXT['passedDate'][self.langIndex], 4)
+            if utility.getDiff(date) <= -1:
+                self.setMessageLabel(lang.TEXT['passedDate'][self.langIndex], 4)
                 return
 
             self.userNextSession.setNextSession(date.togregorian())
@@ -1367,7 +1374,7 @@ class MainWin(QMainWindow):
                 self.setUserInfoPage(self.userNextSession.phoneNumber)
 
         except Exception as e:
-            log('Function: saveNextSession()', str(e) + '\n')
+            utility.log('Function: saveNextSession()', str(e) + '\n')
             self.setMessageLabel(str(e).capitalize() + '.')
 
     def cancelNextSession(self):
@@ -1406,7 +1413,7 @@ class MainWin(QMainWindow):
             month = int(self.txtNsMonth.text())
             day = int(self.txtNsDay.text())
             nextSessionDate = jdatetime.datetime(year, month, day)
-            diff = getDiff(nextSessionDate)
+            diff = utility.getDiff(nextSessionDate)
             if 0 <= diff < 10000:
                 self.txtDays.setText(str(diff))
             
@@ -1422,10 +1429,10 @@ class MainWin(QMainWindow):
             if page == 'lazer':
                 self.userNextSession = self.user
                 self.setReady(False)
-                self.btnCancelNS.setText(TEXT['btnLaterNS'][self.langIndex])
+                self.btnCancelNS.setText(lang.TEXT['btnLaterNS'][self.langIndex])
             elif page == 'edit':
                 self.userNextSession = self.userInfo
-                self.btnCancelNS.setText(TEXT['btnCancelNS'][self.langIndex])
+                self.btnCancelNS.setText(lang.TEXT['btnCancelNS'][self.langIndex])
                 
             self.changeAnimation('vertical')
             self.stackedWidget.setCurrentWidget(self.nextSessionPage)
@@ -1440,26 +1447,26 @@ class MainWin(QMainWindow):
         if ready:
             logErrors = ''
             if self.sensorFlags[5]:
-                logErrors += TEXT['tempError'][0] + '\n'
+                logErrors += lang.TEXT['tempError'][0] + '\n'
                 
             if self.sensorFlags[2]:
-                logErrors += TEXT['waterflowError'][0] + '\n'
+                logErrors += lang.TEXT['waterflowError'][0] + '\n'
                 
             if self.sensorFlags[1]:
-                logErrors += TEXT['waterLevelError'][0] + '\n'
+                logErrors += lang.TEXT['waterLevelError'][0] + '\n'
             
             if self.sensorFlags[0]:
-                logErrors += TEXT['interLockError'][0] + '\n'
+                logErrors += lang.TEXT['interLockError'][0] + '\n'
 
             if self.sensorFlags[3]:
-                logErrors += TEXT['overHeatError'][0] + '\n'
+                logErrors += lang.TEXT['overHeatError'][0] + '\n'
 
             if self.sensorFlags[4]:
-                logErrors += TEXT['physicalDamage'][0] + '\n'
+                logErrors += lang.TEXT['physicalDamage'][0] + '\n'
             
             if logErrors:
-                self.setMessageLabel(TEXT['SensorError'][self.langIndex], 2)
-                log('Sensors', logErrors)
+                self.setMessageLabel(lang.TEXT['SensorError'][self.langIndex], 2)
+                utility.log('Sensors', logErrors)
 
             
             else:
@@ -1471,47 +1478,47 @@ class MainWin(QMainWindow):
                         'pulseWidth': self.correctEnergy(),'frequency': self.frequency, 
                         'couter': self.currentCounter, 'ready-standby': 'Ready'
                     } 
-                    laserPage(fields)
+                    communication.laserPage(fields)
                 else:
                     fields = {
                         'energy': self.energy, 'pulseWidth': self.pulseWidth,
                         'frequency': self.frequency, 'ready-standby': 'Ready'
                     } 
-                    laserPage(fields)
+                    communication.laserPage(fields)
                 
-                self.btnStandby.setStyleSheet(READY_NOT_SELECTED)
-                self.btnStandByCalib.setStyleSheet(READY_NOT_SELECTED)
-                self.btnReady.setStyleSheet(READY_SELECTED)
-                self.btnReadyCalib.setStyleSheet(READY_SELECTED)
+                self.btnStandby.setStyleSheet(styles.READY_NOT_SELECTED)
+                self.btnStandByCalib.setStyleSheet(styles.READY_NOT_SELECTED)
+                self.btnReady.setStyleSheet(styles.READY_SELECTED)
+                self.btnReadyCalib.setStyleSheet(styles.READY_SELECTED)
                 self.frequencyWidget.setEnabled(False)
                 self.energyWidget.setEnabled(False)
                 self.pulseWidthWidget.setEnabled(False)
                 self.skinGradeWidget.setEnabled(False)
                 self.sliderEnergyCalib.setEnabled(False)
                 self.sliderFrequencyCalib.setEnabled(False)
-                self.changeSliderColor(SLIDER_DISABLED_GB, SLIDER_DISABLED_GW)
+                self.changeSliderColor(styles.SLIDER_DISABLED_GB, styles.SLIDER_DISABLED_GW)
 
         else:
             self.ready = False
             index = self.stackedWidget.indexOf(self.laserMainPage)
             if self.stackedWidget.currentIndex() == index:
-                laserPage({'ready-standby': 'StandBy'})
+                communication.laserPage({'ready-standby': 'StandBy'})
             else:
-                laserPage({'ready-standby': 'StandBy'})
-            self.btnStandby.setStyleSheet(READY_SELECTED)
-            self.btnStandByCalib.setStyleSheet(READY_SELECTED)
-            self.btnReady.setStyleSheet(READY_NOT_SELECTED)
-            self.btnReadyCalib.setStyleSheet(READY_NOT_SELECTED)
+                communication.laserPage({'ready-standby': 'StandBy'})
+            self.btnStandby.setStyleSheet(styles.READY_SELECTED)
+            self.btnStandByCalib.setStyleSheet(styles.READY_SELECTED)
+            self.btnReady.setStyleSheet(styles.READY_NOT_SELECTED)
+            self.btnReadyCalib.setStyleSheet(styles.READY_NOT_SELECTED)
             self.frequencyWidget.setEnabled(True)
             self.energyWidget.setEnabled(True)
             self.pulseWidthWidget.setEnabled(True)
             self.skinGradeWidget.setEnabled(True)
             self.sliderEnergyCalib.setEnabled(True)
             self.sliderFrequencyCalib.setEnabled(True)
-            self.changeSliderColor(SLIDER_GB, SLIDER_GW)
+            self.changeSliderColor(styles.SLIDER_GB, styles.SLIDER_GW)
 
     def correctEnergy(self):
-        index = getCoeffIndex(self.energy)
+        index = utility.getCoeffIndex(self.energy)
         return int(self.energy * self.coefficients[index])
 
     def setCooling(self, operation):
@@ -1519,39 +1526,39 @@ class MainWin(QMainWindow):
             if self.cooling < 5:
                 self.cooling += 1
                 self.coolingWidget.setValue(self.cooling)
-                laserPage({'cooling': self.cooling})
+                communication.laserPage({'cooling': self.cooling})
         else:
             if self.cooling >= 1:
                 self.cooling -= 1       
                 self.coolingWidget.setValue(self.cooling)
-                laserPage({'cooling': self.cooling})
+                communication.laserPage({'cooling': self.cooling})
 
     def changeSliderColor(self, c1, c2):
         if self.configs['Theme'] in ['C1', 'C2', 'C4']:
             self.sliderEnergyCalib.setStyleSheet(c1)
             self.sliderFrequencyCalib.setStyleSheet(c1)
-            self.sliderPulseWidthCalib.setStyleSheet(SLIDER_DISABLED_GB)
+            self.sliderPulseWidthCalib.setStyleSheet(styles.SLIDER_DISABLED_GB)
             self.dacSlider.setStyleSheet(c1)
         else:
             self.sliderEnergyCalib.setStyleSheet(c2)
             self.sliderFrequencyCalib.setStyleSheet(c2)             
-            self.sliderPulseWidthCalib.setStyleSheet(SLIDER_DISABLED_GW)
+            self.sliderPulseWidthCalib.setStyleSheet(styles.SLIDER_DISABLED_GW)
             self.dacSlider.setStyleSheet(c2)
 
     def setEnergy(self, operation):
         e = self.energy
         e = e + 1 if operation == 'inc' else e - 1
-        if MIN_ENRGEY <= e <= MAX_ENERGY:
+        if case.MIN_ENRGEY <= e <= case.MAX_ENERGY:
             self.energy = e
             self.energyWidget.setValue(e)
             self.pulseWidth = e
             self.pulseWidthWidget.setValue(e)
             pl = self.pulseWidth
-            if MIN_PULSE_WIDTH <= pl <= MAX_PULSE_WIDTH:
+            if case.MIN_PULSE_WIDTH <= pl <= case.MAX_PULSE_WIDTH:
                 self.pulseWidth = pl
                 self.pulseWidthWidget.setValue(pl)
                 maxF_pl = 1000 / (2 * self.pulseWidth)
-                maxF_pl_con = MAX_FREQUENCY >= maxF_pl
+                maxF_pl_con = case.MAX_FREQUENCY >= maxF_pl
                 if maxF_pl_con and self.frequency >= maxF_pl:
                     self.frequency = math.floor(maxF_pl)
                     self.frequencyWidget.setValue(self.frequency)
@@ -1564,7 +1571,7 @@ class MainWin(QMainWindow):
         self.sliderPulseWidthCalib.setValue(value)
         self.lblPulseWidthValueCalib.setText(str(value))
         maxF_pl = 1000 / (2 * self.pulseWidth)
-        maxF_pl_con = MAX_FREQUENCY >= maxF_pl
+        maxF_pl_con = case.MAX_FREQUENCY >= maxF_pl
         if maxF_pl_con and self.frequency >= maxF_pl:
             self.frequency = math.floor(maxF_pl)
             self.frequencyWidget.setValue(self.frequency)
@@ -1574,11 +1581,11 @@ class MainWin(QMainWindow):
     def setFrequency(self, operation):
         freq = self.frequency
         freq = freq + 1 if operation == 'inc' else freq - 1
-        if MIN_FREQUENCY <= freq <= MAX_FREQUENCY:
+        if case.MIN_FREQUENCY <= freq <= case.MAX_FREQUENCY:
             self.frequency = freq
             self.frequencyWidget.setValue(freq)
             maxF_pl = math.floor(1000 / (2 * self.pulseWidth))
-            maxF_pl_con = MAX_FREQUENCY >= maxF_pl
+            maxF_pl_con = case.MAX_FREQUENCY >= maxF_pl
             if maxF_pl_con and self.frequency >= maxF_pl:
                 self.frequency = maxF_pl
                 self.frequencyWidget.setValue(maxF_pl)
@@ -1589,7 +1596,7 @@ class MainWin(QMainWindow):
     
     def frequencySliderReleased(self):
         maxF_pl = math.floor(1000 / (2 * self.pulseWidth))
-        maxF_pl_con = MAX_FREQUENCY >= maxF_pl
+        maxF_pl_con = case.MAX_FREQUENCY >= maxF_pl
         if maxF_pl_con and self.frequency >= maxF_pl:
             self.frequency = maxF_pl
             self.frequencyWidget.setValue(maxF_pl)
@@ -1597,16 +1604,16 @@ class MainWin(QMainWindow):
             self.lblFrequencyValueCalib.setText(str(maxF_pl))        
     
     def saveCase(self):
-        case = openCase(self.case)
-        case.save(
+        caseObj = case.openCase(self.case)
+        caseObj.save(
             self.sex, self.bodyPart, (self.energy, self.pulseWidth, self.frequency)
         )
-        self.setMessageLabel(TEXT['saved'][self.langIndex], 1.5)
+        self.setMessageLabel(lang.TEXT['saved'][self.langIndex], 1.5)
 
     def bodyPartsSignals(self):
         buttons = chain(
-            getLayoutWidgets(self.fBodyPartsLayout, QPushButton),
-            getLayoutWidgets(self.mBodyPartsLayout, QPushButton)
+            utility.getLayoutWidgets(self.fBodyPartsLayout, QPushButton),
+            utility.getLayoutWidgets(self.mBodyPartsLayout, QPushButton)
         )
 
         for btn in buttons:
@@ -1624,27 +1631,27 @@ class MainWin(QMainWindow):
             'pulseWidth': self.correctEnergy(),'frequency': self.frequency, 
             'couter': self.currentCounter, 
         }
-        laserPage(fields)
+        communication.laserPage(fields)
     
     def setBodyPart(self, sex, bodyPart):
         def wrapper():
             self.bodyPart = bodyPart
             key = sex + ' ' + bodyPart
-            self.selectedBodyPart.setText(TEXT[bodyPart][self.langIndex])
-            self.selectedBodyPart.setIcon(BODY_PART_ICONS[key])
+            self.selectedBodyPart.setText(lang.TEXT[bodyPart][self.langIndex])
+            self.selectedBodyPart.setIcon(paths.BODY_PART_ICONS[key])
             
         return wrapper
 
     def setSex(self, sex):
         if sex == 'male':
             self.stackedWidgetSex.setCurrentWidget(self.malePage)
-            self.btnMale.setStyleSheet(SELECTED_SEX)
-            self.btnFemale.setStyleSheet(NOT_SELECTED_SEX)
+            self.btnMale.setStyleSheet(styles.SELECTED_SEX)
+            self.btnFemale.setStyleSheet(styles.NOT_SELECTED_SEX)
             self.sex = 'male'
         else:
             self.stackedWidgetSex.setCurrentWidget(self.femalePage)
-            self.btnMale.setStyleSheet(NOT_SELECTED_SEX)
-            self.btnFemale.setStyleSheet(SELECTED_SEX)
+            self.btnMale.setStyleSheet(styles.NOT_SELECTED_SEX)
+            self.btnFemale.setStyleSheet(styles.SELECTED_SEX)
             self.sex = 'female'
 
     def casesSignals(self):
@@ -1661,8 +1668,8 @@ class MainWin(QMainWindow):
         return wrapper
 
     def loadCase(self):
-        case = openCase(self.case)
-        energy, pl, freq = case.getValue(self.sex, self.bodyPart)
+        caseObj = case.openCase(self.case)
+        energy, pl, freq = caseObj.getValue(self.sex, self.bodyPart)
         self.energy = energy
         self.pulseWidth = pl
         self.frequency = freq
@@ -1676,13 +1683,14 @@ class MainWin(QMainWindow):
         index = self.stackedWidgetSettings.indexOf(self.settingsMenuPage)
         if self.stackedWidgetSettings.currentIndex() == index:
             self.stackedWidget.setCurrentWidget(self.mainPage)
+            communication.enterPage(communication.MAIN_PAGE)
         else:
             self.stackedWidgetSettings.setCurrentWidget(self.settingsMenuPage)
             self.hWPage.setVisible(False)
             self.uiPage.setVisible(False)
             if self.ready:
                 self.setReady(False)
-            enterPage(MAIN_PAGE) 
+            communication.enterPage(communication.OTHER_PAGE) 
 
     def searchUsers(self):
         name = self.txtSearchUsers.text().lower()
@@ -1742,12 +1750,12 @@ class MainWin(QMainWindow):
 
     def keyboardSignals(self):
         buttons = chain(
-            getLayoutWidgets(self.keyboardRow1, QPushButton),
-            getLayoutWidgets(self.keyboardRow2, QPushButton),
-            getLayoutWidgets(self.keyboardRow3, QPushButton),
-            getLayoutWidgets(self.numRow1, QPushButton),
-            getLayoutWidgets(self.numRow2, QPushButton),
-            getLayoutWidgets(self.numRow3, QPushButton)
+            utility.getLayoutWidgets(self.keyboardRow1, QPushButton),
+            utility.getLayoutWidgets(self.keyboardRow2, QPushButton),
+            utility.getLayoutWidgets(self.keyboardRow3, QPushButton),
+            utility.getLayoutWidgets(self.numRow1, QPushButton),
+            utility.getLayoutWidgets(self.numRow2, QPushButton),
+            utility.getLayoutWidgets(self.numRow3, QPushButton)
         )
 
         for btn in buttons:
@@ -1763,19 +1771,19 @@ class MainWin(QMainWindow):
         self.shift = not self.shift
 
         buttons = chain(
-            getLayoutWidgets(self.keyboardRow1, QPushButton),
-            getLayoutWidgets(self.keyboardRow2, QPushButton),
-            getLayoutWidgets(self.keyboardRow3, QPushButton),
+            utility.getLayoutWidgets(self.keyboardRow1, QPushButton),
+            utility.getLayoutWidgets(self.keyboardRow2, QPushButton),
+            utility.getLayoutWidgets(self.keyboardRow3, QPushButton),
         )
             
         if self.shift:
-            self.btnShift.setStyleSheet(SHIFT_PRESSED)
+            self.btnShift.setStyleSheet(styles.SHIFT_PRESSED)
             self.btnH.setText('H\nآ')
             for btn in buttons:
                 btn.setText(btn.text().upper())
 
         else:
-            self.btnShift.setStyleSheet(SHIFT)
+            self.btnShift.setStyleSheet(styles.SHIFT)
             self.btnH.setText('h\nا')
             for btn in buttons:
                 btn.setText(btn.text().lower())
@@ -1784,7 +1792,7 @@ class MainWin(QMainWindow):
         self.farsi = not self.farsi
         
         if self.farsi:
-            self.btnFa.setStyleSheet(FARSI_PRESSED)
+            self.btnFa.setStyleSheet(styles.FARSI_PRESSED)
         else:
             self.btnFa.setStyleSheet('')
 
@@ -1922,7 +1930,7 @@ class MainWin(QMainWindow):
             self.txtResetCounterPass.clear()
             self.setKeyboard('hide')
         else:
-            self.txtResetCounterPass.setStyleSheet(TXT_RESET_COUNTER_WRONG_PASS)
+            self.txtResetCounterPass.setStyleSheet(styles.TXT_RESET_COUNTER_WRONG_PASS)
             self.txtResetCounterPass.setFocus()
             self.txtResetCounterPass.selectAll()
             self.resetCounterPassTimer.start(4000)
@@ -1953,15 +1961,15 @@ class MainWin(QMainWindow):
     def insertUserTabel(self, user):
         rowPosition = self.usersTable.rowCount()
         self.usersTable.insertRow(rowPosition)
-        action = Action(self.usersTable, user.phoneNumber)
+        action = promotions.Action(self.usersTable, user.phoneNumber)
         action.btnInfo.pressed.connect(lambda: self.playTouchSound('t'))
         action.info.connect(self.setUserInfoPage)
         action.chbDel.pressed.connect(lambda: self.playTouchSound('t'))
         action.delete.connect(self.userDeleteChbToggled)
         self.usersTable.setCellWidget(rowPosition, 3, action)
-        number = QTableWidgetItem(user.phoneNumber)
-        name = QTableWidgetItem(user.name)
-        sessions = QTableWidgetItem()
+        number = QPropertyAnimation(user.phoneNumber)
+        name = QPropertyAnimation(user.name)
+        sessions = QPropertyAnimation()
         sessions.setData(Qt.EditRole, user.sessionNumber - 1)
         number.setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
         name.setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
@@ -1986,9 +1994,9 @@ class MainWin(QMainWindow):
             self.usersTable.cellWidget(row, 3).chbDel.setChecked(self.selectAllFlag)
 
         if self.selectAllFlag:
-            self.btnSelectAll.setText(TEXT['btnDeselectAll'][self.langIndex])
+            self.btnSelectAll.setText(lang.TEXT['btnDeselectAll'][self.langIndex])
         else:
-            self.btnSelectAll.setText(TEXT['btnSelectAll'][self.langIndex])
+            self.btnSelectAll.setText(lang.TEXT['btnSelectAll'][self.langIndex])
 
     def removeSelectedUsers(self):
         for num in self.selectedUsers:
@@ -1996,7 +2004,7 @@ class MainWin(QMainWindow):
             del self.usersData[num]
         
         self.lblSelectedUsersValue.setText('0')
-        self.btnSelectAll.setText(TEXT['btnSelectAll'][self.langIndex])
+        self.btnSelectAll.setText(lang.TEXT['btnSelectAll'][self.langIndex])
         self.selectAllFlag = False
         self.selectedUsers.clear()
 
@@ -2032,22 +2040,22 @@ class MainWin(QMainWindow):
     def setUserInfoPage(self, num):
         self.stackedWidget.setCurrentWidget(self.editUserPage)
         self.userInfo = self.usersData[num]
-        nextSessionDate = toJalali(self.userInfo.nextSession)
+        nextSessionDate = utility.toJalali(self.userInfo.nextSession)
         if not nextSessionDate:
-            self.txtNextSession.setText(TEXT['notSet'][self.langIndex])
+            self.txtNextSession.setText(lang.TEXT['notSet'][self.langIndex])
         else:
-            diff = getDiff(nextSessionDate)
+            diff = utility.getDiff(nextSessionDate)
 
             if diff == 0:
-                self.txtNextSession.setText(TEXT['today'][self.langIndex])
+                self.txtNextSession.setText(lang.TEXT['today'][self.langIndex])
             elif diff == -1:
-                self.txtNextSession.setText(TEXT['1dayPassed'][self.langIndex])
+                self.txtNextSession.setText(lang.TEXT['1dayPassed'][self.langIndex])
             elif diff < -1:
-                self.txtNextSession.setText(f'{abs(diff)} {TEXT["nDayPassed"][self.langIndex]}')
+                self.txtNextSession.setText(f'{abs(diff)} {lang.TEXT["nDayPassed"][self.langIndex]}')
             elif diff == 1:
-                self.txtNextSession.setText(TEXT['1dayleft'][self.langIndex])
+                self.txtNextSession.setText(lang.TEXT['1dayleft'][self.langIndex])
             else:
-                self.txtNextSession.setText(f'{diff} {TEXT["nDayLeft"][self.langIndex]}')
+                self.txtNextSession.setText(f'{diff} {lang.TEXT["nDayLeft"][self.langIndex]}')
 
         self.txtEditNumber.setText(self.userInfo.phoneNumber)
         self.txtEditName.setText(self.userInfo.name)
@@ -2057,15 +2065,15 @@ class MainWin(QMainWindow):
         totalCellColor = QColor(245, 151, 125)
         dateColor = QColor(213, 140, 255)
         for sn in sessions:
-            date = TableWidgetItem(str(toJalali(sessions[sn]['date']).date()), dateColor)
-            face = TableWidgetItem(str(sessions[sn]['face']))
-            armpit = TableWidgetItem(str(sessions[sn]['armpit']))
-            arm = TableWidgetItem(str(sessions[sn]['arm']))
-            body = TableWidgetItem(str(sessions[sn]['body']))
-            bikini = TableWidgetItem(str(sessions[sn]['bikini']))
-            leg = TableWidgetItem(str(sessions[sn]['leg']))
+            date = promotions.TableWidgetItem(str(utility.toJalali(sessions[sn]['date']).date()), dateColor)
+            face = promotions.TableWidgetItem(str(sessions[sn]['face']))
+            armpit = promotions.TableWidgetItem(str(sessions[sn]['armpit']))
+            arm = promotions.TableWidgetItem(str(sessions[sn]['arm']))
+            body = promotions.TableWidgetItem(str(sessions[sn]['body']))
+            bikini = promotions.TableWidgetItem(str(sessions[sn]['bikini']))
+            leg = promotions.TableWidgetItem(str(sessions[sn]['leg']))
             dateShots = [shot for key, shot in sessions[sn].items() if key != 'date']
-            totalRow = TableWidgetItem(str(sum(dateShots)), totalCellColor)
+            totalRow = promotions.TableWidgetItem(str(sum(dateShots)), totalCellColor)
 
             self.userInfoTable.setItem(sn - 1, 0, date)
             self.userInfoTable.setItem(sn - 1, 1, face)
@@ -2077,7 +2085,7 @@ class MainWin(QMainWindow):
             self.userInfoTable.setItem(sn - 1, 7, totalRow)
 
         lastRow = len(sessions)
-        self.userInfoTable.setItem(lastRow, 0, TableWidgetItem(''))
+        self.userInfoTable.setItem(lastRow, 0, promotions.TableWidgetItem(''))
 
         bodyParts = self.userInfo.shot.keys()
         totalColumn = dict.fromkeys(bodyParts, 0)
@@ -2085,14 +2093,14 @@ class MainWin(QMainWindow):
             for part in bodyParts:
                 totalColumn[part] += shots[part] 
 
-        face = TableWidgetItem(str(totalColumn['face']), totalCellColor)
-        armpit = TableWidgetItem(str(totalColumn['armpit']), totalCellColor)
-        arm = TableWidgetItem(str(totalColumn['arm']), totalCellColor)
-        body = TableWidgetItem(str(totalColumn['body']), totalCellColor)
-        bikini = TableWidgetItem(str(totalColumn['bikini']), totalCellColor)
-        leg = TableWidgetItem(str(totalColumn['leg']), totalCellColor)
+        face = promotions.TableWidgetItem(str(totalColumn['face']), totalCellColor)
+        armpit = promotions.TableWidgetItem(str(totalColumn['armpit']), totalCellColor)
+        arm = promotions.TableWidgetItem(str(totalColumn['arm']), totalCellColor)
+        body = promotions.TableWidgetItem(str(totalColumn['body']), totalCellColor)
+        bikini = promotions.TableWidgetItem(str(totalColumn['bikini']), totalCellColor)
+        leg = promotions.TableWidgetItem(str(totalColumn['leg']), totalCellColor)
         datesShots = sum(totalColumn.values())
-        totalShots = TableWidgetItem(str(datesShots), QColor(247, 104, 64))
+        totalShots = promotions.TableWidgetItem(str(datesShots), QColor(247, 104, 64))
         
         self.userInfoTable.setItem(lastRow, 1, face)
         self.userInfoTable.setItem(lastRow, 2, armpit)
@@ -2108,13 +2116,13 @@ class MainWin(QMainWindow):
         
         for user in users:
             if user.sessionNumber == 1:
-                nextSession = toJalali(user.nextSession)
-                num = TableWidgetItem(user.phoneNumber)
-                name = TableWidgetItem(user.name)
-                text = TEXT['firstTime'][self.langIndex] 
-                lastSession = TableWidgetItem(text)
-                sn = TableWidgetItem(str(user.sessionNumber))
-                if nextSession and getDiff(nextSession) == int(self.txtFSdays.text()):
+                nextSession = utility.toJalali(user.nextSession)
+                num = promotions.TableWidgetItem(user.phoneNumber)
+                name = promotions.TableWidgetItem(user.name)
+                text = lang.TEXT['firstTime'][self.langIndex] 
+                lastSession = promotions.TableWidgetItem(text)
+                sn = promotions.TableWidgetItem(str(user.sessionNumber))
+                if nextSession and utility.getDiff(nextSession) == int(self.txtFSdays.text()):
                     self.tableFutureSessions.setRowCount(row + 1)
                     self.tableFutureSessions.setItem(row, 0, num)
                     self.tableFutureSessions.setItem(row, 1, name)
@@ -2123,13 +2131,13 @@ class MainWin(QMainWindow):
                     row += 1
 
             else:
-                nextSession = toJalali(user.nextSession)
-                lastSession = toJalali(user.sessions[user.sessionNumber -1]['date'])
-                lastSession = TableWidgetItem(str(lastSession.date()))
-                num = TableWidgetItem(user.phoneNumber)
-                name = TableWidgetItem(user.name)
-                sn = TableWidgetItem(str(user.sessionNumber))
-                if nextSession and getDiff(nextSession) == int(self.txtFSdays.text()):
+                nextSession = utility.toJalali(user.nextSession)
+                lastSession = utility.toJalali(user.sessions[user.sessionNumber -1]['date'])
+                lastSession = promotions.TableWidgetItem(str(lastSession.date()))
+                num = promotions.TableWidgetItem(user.phoneNumber)
+                name = promotions.TableWidgetItem(user.name)
+                sn = promotions.TableWidgetItem(str(user.sessionNumber))
+                if nextSession and utility.getDiff(nextSession) == int(self.txtFSdays.text()):
                     self.tableFutureSessions.setRowCount(row + 1)
                     self.tableFutureSessions.setItem(row, 0, num)
                     self.tableFutureSessions.setItem(row, 1, name)
@@ -2141,12 +2149,12 @@ class MainWin(QMainWindow):
         self.tableFutureSessions.setRowCount(row)
         fsDays = int(self.txtFSdays.text())
         if fsDays == 0:
-            self.lblFutureSessionsTableTitle.setText(TEXT['today'][self.langIndex])
+            self.lblFutureSessionsTableTitle.setText(lang.TEXT['today'][self.langIndex])
         elif fsDays == 1:
-            self.lblFutureSessionsTableTitle.setText(TEXT['tomorrow'][self.langIndex])
+            self.lblFutureSessionsTableTitle.setText(lang.TEXT['tomorrow'][self.langIndex])
         elif fsDays > 1:
             self.lblFutureSessionsTableTitle.setText(
-                self.txtFSdays.text() + ' ' + TEXT['daysLater'][self.langIndex]
+                self.txtFSdays.text() + ' ' + lang.TEXT['daysLater'][self.langIndex]
             )
 
     def incDecDayFS(self, operation): 
@@ -2166,13 +2174,13 @@ class MainWin(QMainWindow):
         numberEdited = False
 
         if not numberEdit or numberEdit.isspace():
-            self.setMessageLabel(TEXT['emptyNumber'][self.langIndex], 4)
+            self.setMessageLabel(lang.TEXT['emptyNumber'][self.langIndex], 4)
             self.txtEditNumber.setFocus()
             return
 
         if numberEdit != self.userInfo.phoneNumber:
             if numberEdit in self.usersData:
-                self.setMessageLabel(TEXT['alreadyExists'][self.langIndex], 4)
+                self.setMessageLabel(lang.TEXT['alreadyExists'][self.langIndex], 4)
                 self.txtEditNumber.setFocus()
                 return
 
@@ -2193,7 +2201,7 @@ class MainWin(QMainWindow):
             self.removeUserFromTabel(self.userInfo.phoneNumber)
 
         self.insertUserTabel(self.userInfo)
-        self.setMessageLabel(TEXT['userUpdated'][self.langIndex], 4)
+        self.setMessageLabel(lang.TEXT['userUpdated'][self.langIndex], 4)
 
     def submitNewUser(self):
         number = self.txtNumberSubmit.text()
@@ -2201,16 +2209,16 @@ class MainWin(QMainWindow):
         name = name if name else 'User ' + str(len(self.usersData) + 1)
 
         if not number or number.isspace():
-            self.setMessageLabel(TEXT['emptyNumber'][self.langIndex], 3)
+            self.setMessageLabel(lang.TEXT['emptyNumber'][self.langIndex], 3)
             self.txtNumberSubmit.setFocus()
             return
 
         if number in self.usersData:
-            self.setMessageLabel(TEXT['alreadyExistsSub'][self.langIndex], 4)
+            self.setMessageLabel(lang.TEXT['alreadyExistsSub'][self.langIndex], 4)
             self.txtNumberSubmit.setFocus()
             return
 
-        self.usersData[number] = User(number, name)
+        self.usersData[number] = user.User(number, name)
         self.insertUserTabel(self.usersData[number])
         self.txtNumber.setText(number)
         self.txtNumberSubmit.clear()
@@ -2245,7 +2253,7 @@ class MainWin(QMainWindow):
         self.changeAnimation('horizontal')
         self.stackedWidget.setCurrentWidget(self.laserMainPage)
         self.mainPage.setVisible(False)
-        enterPage(BODY_PART_PAGE)
+        communication.enterPage(communication.BODY_PART_PAGE)
         self.monitorSensorsTimer.start(500)
         self.monitorReceivingSensors.start(3000)
 
@@ -2270,7 +2278,7 @@ class MainWin(QMainWindow):
             self.saveConfigs()
             self.resetCalibrationParameters()
         except Exception as e:
-            log('Function: endSession()', str(e) + '\n')
+            utility.log('Function: endSession()', str(e) + '\n')
 
         finally:
             self.stackedWidget.setCurrentWidget(self.mainPage)
@@ -2341,7 +2349,7 @@ class MainWin(QMainWindow):
             self.resetCounterMsgFrame.setLayoutDirection(Qt.RightToLeft)
             self.calibFrame0.setLayoutDirection(Qt.RightToLeft)
             self.futureSessionFrame.setLayoutDirection(Qt.RightToLeft)
-            icon = QPixmap(SELECTED_LANG_ICON)
+            icon = QPixmap(paths.SELECTED_LANG_ICON)
             self.lblFaSelected.setPixmap(icon.scaled(70, 70))
             self.lblEnSelected.clear()
             self.configs['Language'] = 'fa'
@@ -2360,107 +2368,107 @@ class MainWin(QMainWindow):
             self.resetCounterMsgFrame.setLayoutDirection(Qt.LeftToRight)
             self.calibFrame0.setLayoutDirection(Qt.LeftToRight)
             self.futureSessionFrame.setLayoutDirection(Qt.LeftToRight)
-            icon = QPixmap(SELECTED_LANG_ICON)
+            icon = QPixmap(paths.SELECTED_LANG_ICON)
             self.lblEnSelected.setPixmap(icon.scaled(70, 70))
             self.lblFaSelected.clear()
             self.configs['Language'] = 'en'
             self.langIndex = 0
 
         if not self.saveConfigs():
-            self.setMessageLabel(TEXT['saveConfigError'][self.langIndex], 4)
+            self.setMessageLabel(lang.TEXT['saveConfigError'][self.langIndex], 4)
 
         self.txtLogs.setFont(QFont('Consolas', 18))
         self.ownerInfoSplash.adjustSize()
         txt = self.ownerInfoSplash.text()
-        if txt and isFarsi(txt):
-            self.ownerInfoSplash.setStyleSheet(OWNER_INFO_STYLE_FA)
+        if txt and utility.isFarsi(txt):
+            self.ownerInfoSplash.setStyleSheet(styles.OWNER_INFO_STYLE_FA)
         else:
-            self.ownerInfoSplash.setStyleSheet(OWNER_INFO_STYLE_EN)
+            self.ownerInfoSplash.setStyleSheet(styles.OWNER_INFO_STYLE_EN)
 
-        self.toolBox.setItemText(0, TEXT['relaysBox'][self.langIndex])
-        self.toolBox.setItemText(1, TEXT['driverFunctionalityBox'][self.langIndex])
-        self.toolBox.setItemText(2, TEXT['sensorsBox'][self.langIndex])
-        self.skinGradeWidget.label.setText(TEXT['lblSkinGrade'][self.langIndex])
-        self.skinGradeWidget.btnSave.setText(TEXT['btnSaveInfo'][self.langIndex])
-        self.energyWidget.lblParameter.setText(TEXT['lblEnergy'][self.langIndex])
-        self.frequencyWidget.lblParameter.setText(TEXT['lblFrequency'][self.langIndex])
-        self.pulseWidthWidget.lblParameter.setText(TEXT['lblPulseWidth'][self.langIndex])
-        self.energyWidget.lblUnit.setText(TEXT['lblJoule'][self.langIndex])
-        self.frequencyWidget.lblUnit.setText(TEXT['lblHz'][self.langIndex])
-        self.pulseWidthWidget.lblUnit.setText(TEXT['lblmSec'][self.langIndex])
-        self.counterWidget.lblParameter.setText(TEXT['lblCounter'][self.langIndex])
-        self.coolingWidget.lblParameter.setText(TEXT['lblCooling'][self.langIndex])
+        self.toolBox.setItemText(0, lang.TEXT['relaysBox'][self.langIndex])
+        self.toolBox.setItemText(1, lang.TEXT['driverFunctionalityBox'][self.langIndex])
+        self.toolBox.setItemText(2, lang.TEXT['sensorsBox'][self.langIndex])
+        self.skinGradeWidget.label.setText(lang.TEXT['lblSkinGrade'][self.langIndex])
+        self.skinGradeWidget.btnSave.setText(lang.TEXT['btnSaveInfo'][self.langIndex])
+        self.energyWidget.lblParameter.setText(lang.TEXT['lblEnergy'][self.langIndex])
+        self.frequencyWidget.lblParameter.setText(lang.TEXT['lblFrequency'][self.langIndex])
+        self.pulseWidthWidget.lblParameter.setText(lang.TEXT['lblPulseWidth'][self.langIndex])
+        self.energyWidget.lblUnit.setText(lang.TEXT['lblJoule'][self.langIndex])
+        self.frequencyWidget.lblUnit.setText(lang.TEXT['lblHz'][self.langIndex])
+        self.pulseWidthWidget.lblUnit.setText(lang.TEXT['lblmSec'][self.langIndex])
+        self.counterWidget.lblParameter.setText(lang.TEXT['lblCounter'][self.langIndex])
+        self.coolingWidget.lblParameter.setText(lang.TEXT['lblCooling'][self.langIndex])
 
         for lbl in self.findChildren(QLabel):
-            if lbl.objectName() in TEXT.keys():
-                lbl.setText(TEXT[lbl.objectName()][self.langIndex])
+            if lbl.objectName() in lang.TEXT.keys():
+                lbl.setText(lang.TEXT[lbl.objectName()][self.langIndex])
 
         for btn in self.findChildren(QPushButton):
-            if btn.objectName() in TEXT.keys():
-                btn.setText(TEXT[btn.objectName()][self.langIndex])
+            if btn.objectName() in lang.TEXT.keys():
+                btn.setText(lang.TEXT[btn.objectName()][self.langIndex])
 
         for txt in self.findChildren(QLineEdit):
-            if txt.objectName() in TEXT.keys():
-                txt.setPlaceholderText(TEXT[txt.objectName()][self.langIndex])
+            if txt.objectName() in lang.TEXT.keys():
+                txt.setPlaceholderText(lang.TEXT[txt.objectName()][self.langIndex])
 
         for i in range(8):
             self.userInfoTable.horizontalHeaderItem(i).setText(
-                TEXT[f'userInfoTable{i}'][self.langIndex]
+                lang.TEXT[f'userInfoTable{i}'][self.langIndex]
             )
             if i < 4:
                 self.tableFutureSessions.horizontalHeaderItem(i).setText(
-                    TEXT[f'tbFsessions{i}'][self.langIndex]
+                    lang.TEXT[f'tbFsessions{i}'][self.langIndex]
                 )
                 self.usersTable.horizontalHeaderItem(i).setText(
-                    TEXT[f'usersTable{i}'][self.langIndex]
+                    lang.TEXT[f'usersTable{i}'][self.langIndex]
                 )
             if i < 3: 
                 self.tableLock.horizontalHeaderItem(i).setText(
-                    TEXT[f'tableLock{i}'][self.langIndex]
+                    lang.TEXT[f'tableLock{i}'][self.langIndex]
                 )            
 
         self.btnEnLang.setDisabled(False)
         self.btnFaLang.setDisabled(False)        
         
     def enterLogsPage(self):
-        if os.path.isfile(LOGS_PATH):
-            EncryptDecrypt(LOGS_PATH, 15)
-            with open(LOGS_PATH, 'r') as f: 
+        if os.path.isfile(paths.LOGS_PATH):
+            utility.EncryptDecrypt(paths.LOGS_PATH, 15)
+            with open(paths.LOGS_PATH, 'r') as f: 
                 self.txtLogs.setText(f.read())
-            EncryptDecrypt(LOGS_PATH, 15)
+            utility.EncryptDecrypt(paths.LOGS_PATH, 15)
 
         self.hwStackedWidget.setCurrentWidget(self.systemLogPage)
-        enterPage(OTHER_PAGE)
+        communication.enterPage(communication.OTHER_PAGE)
         self.txtLogs.verticalScrollBar().setValue(
             self.txtLogs.verticalScrollBar().maximum()
         )
 
     def deleteLogs(self):
-        if os.path.isfile(LOGS_PATH):
-            os.remove(LOGS_PATH)
+        if os.path.isfile(paths.LOGS_PATH):
+            os.remove(paths.LOGS_PATH)
         
         self.txtLogs.setText('')
 
     def saveUsers(self):
         try:
-            with open(USERS_DATA, 'wb') as f:
+            with open(paths.USERS_DATA, 'wb') as f:
                 pickle.dump(self.usersData, f)
             
         except Exception as e:
             print(e)
-            log('Saving Users Info', str(e) + '\n')
+            utility.log('Saving Users Info', str(e) + '\n')
         
     def saveConfigs(self):
         try:
-            with open(CONFIG_FILE, 'wb') as f:
+            with open(paths.CONFIG_FILE, 'wb') as f:
                 pickle.dump(self.configs, f)
 
-            EncryptDecrypt(CONFIG_FILE, 15)
+            utility.EncryptDecrypt(paths.CONFIG_FILE, 15)
             return True
         
         except Exception as e:
             print(e)
-            log('Saving Configs', str(e) + '\n')
+            utility.log('Saving Configs', str(e) + '\n')
             return False
 
     def findWord(self, findText, reverse=False):
@@ -2486,7 +2494,7 @@ class MainWin(QMainWindow):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    pixmap = QPixmap(SPLASH_LOADING)
+    pixmap = QPixmap(paths.SPLASH_LOADING)
     splash = QSplashScreen(pixmap)
     splash.showFullScreen()
     app.processEvents()

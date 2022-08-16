@@ -2,6 +2,7 @@ import subprocess
 import jdatetime
 import datetime
 import platform
+import pathlib
 import hashlib
 import random
 import shutil
@@ -13,7 +14,7 @@ import os
 from PyQt5.QtCore import QThread, pyqtSignal
 from PyQt5.QtWidgets import QApplication
 
-from paths import *
+import paths
 
 
 def getRPiModel():
@@ -40,15 +41,15 @@ def log(title, info):
     time = str(jdatetime.datetime.now().strftime('[%Y-%m-%d %H:%M:%S]'))
     time += ' <' + title + '>\n'
     try:
-        if not os.path.isfile(LOGS_PATH):
-            open(LOGS_PATH, 'w').close()
-            EncryptDecrypt(LOGS_PATH, 15)
+        if not os.path.isfile(paths.LOGS_PATH):
+            open(paths.LOGS_PATH, 'w').close()
+            EncryptDecrypt(paths.LOGS_PATH, 15)
             
-        EncryptDecrypt(LOGS_PATH, 15)
-        with open(LOGS_PATH, 'a') as f:
+        EncryptDecrypt(paths.LOGS_PATH, 15)
+        with open(paths.LOGS_PATH, 'a') as f:
             f.write(time + info + '\n')
             
-        EncryptDecrypt(LOGS_PATH, 15)
+        EncryptDecrypt(paths.LOGS_PATH, 15)
     except Exception as e:
         print(e)
 
@@ -60,9 +61,9 @@ def monitorInfo():
     if platform.system() == 'Windows':
         info = 'Unknown'
     else:
-        subprocess.call(f'chmod 755 {MONITOR_COMMAND}', shell=True)
-        subprocess.call(f'{MONITOR_COMMAND}')
-        with open(MONITOR_INFO_FILE, 'r') as f:
+        subprocess.call(f'chmod 755 {paths.MONITOR_COMMAND}', shell=True)
+        subprocess.call(f'{paths.MONITOR_COMMAND}')
+        with open(paths.MONITOR_INFO_FILE, 'r') as f:
             for l in f:
                 if l.strip().startswith('Display Product Name'):
                     info = l.split(':')[1].strip()[1:-1]
@@ -162,11 +163,11 @@ def getCoeffIndex(value, interval = False):
 
 
 def addExtenstion(file):
-    files = os.listdir(TUTORIALS_DIR)
-    if os.path.isfile(join(TUTORIALS_DIR, '.gitignore')):
+    files = os.listdir(paths.TUTORIALS_DIR)
+    if os.path.isfile(os.path.join(paths.TUTORIALS_DIR, '.gitignore')):
         files.remove('.gitignore')
     for f in files:
-        path = os.path.join(TUTORIALS_DIR, f)
+        path = os.path.join(paths.TUTORIALS_DIR, f)
         if file == pathlib.Path(path).stem:
             return file + pathlib.Path(path).suffix
 
@@ -224,18 +225,18 @@ def EncryptDecrypt(filename, key):
     
 
 def loadConfigs():
-    if not os.path.isfile(CONFIG_FILE):
+    if not os.path.isfile(paths.CONFIG_FILE):
         print("Config file not found.")
         log('Config', 'Config file not found.\n')
         exit(1)
     
     try:
-        EncryptDecrypt(CONFIG_FILE, 15)
-        file = open(CONFIG_FILE, 'rb')
+        EncryptDecrypt(paths.CONFIG_FILE, 15)
+        file = open(paths.CONFIG_FILE, 'rb')
         configs = pickle.load(file)
         if len(configs) == 0:
             file.close()
-            file = open(CONFIG_FILE, 'wb')
+            file = open(paths.CONFIG_FILE, 'wb')
             configs = {
                 'License': genLicense(),
                 'Language': 'en',
@@ -267,7 +268,7 @@ def loadConfigs():
         else:
             file.close()
 
-        EncryptDecrypt(CONFIG_FILE, 15)
+        EncryptDecrypt(paths.CONFIG_FILE, 15)
 
         return configs
 
@@ -279,10 +280,10 @@ def loadConfigs():
 
 def saveConfigs(configs):
     try:
-        with open(CONFIG_FILE, 'wb') as f:
+        with open(paths.CONFIG_FILE, 'wb') as f:
             pickle.dump(configs, f)
 
-        EncryptDecrypt(CONFIG_FILE, 15)
+        EncryptDecrypt(paths.CONFIG_FILE, 15)
         return True
     
     except Exception as e:
@@ -293,8 +294,8 @@ def saveConfigs(configs):
 
 def loadCoefficients():
     try: 
-        if os.path.isfile(COEFFICIENTS):
-            with open(COEFFICIENTS, 'rb') as file:
+        if os.path.isfile(paths.COEFFICIENTS):
+            with open(paths.COEFFICIENTS, 'rb') as file:
                 coefficients = pickle.load(file)
         else:
             coefficients = [1] * 8
@@ -308,7 +309,7 @@ def loadCoefficients():
 
 def saveCoefficients(coeffs):
     try:
-        with open(COEFFICIENTS, 'wb') as f:
+        with open(paths.COEFFICIENTS, 'wb') as f:
             pickle.dump(coeffs, f)
 
         return True
