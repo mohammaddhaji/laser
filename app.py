@@ -1,3 +1,4 @@
+import pathlib
 import jdatetime
 import hashlib
 import pickle
@@ -1265,11 +1266,9 @@ class MainWin(QMainWindow):
         ax = (1920 - self.player.size().width()) // 2
         ay = (1080 - self.player.size().height()) // 2
         self.player.move(ax, ay)
-        films = os.listdir(paths.TUTORIALS_DIR)
-        if '.gitignore' in films:
-            films.remove('.gitignore')
+        files = utility.getVideosAndPictures()
 
-        rows = len(films) // 3 if len(films) % 3 == 0 else len(films) // 3 + 1
+        rows = len(files) // 3 if len(files) % 3 == 0 else len(files) // 3 + 1
         if not rows:
             lblTutorialMsg = QLabel(lang.TEXT['lblTutorialMsg'][self.langIndex])
             lblTutorialMsg.setObjectName('lblTutorialMsg')
@@ -1279,11 +1278,16 @@ class MainWin(QMainWindow):
 
         for x in range(rows):
             for y in range(3):
-                if films:
-                    button = QPushButton(str(str(3*x+y)))
-                    button.setText(films.pop())
+                if files:
+                    button = QPushButton()
+                    file = files.pop()
+                    if file[1]:
+                        button.setIcon(QIcon(file[1]))
+                    else:
+                        button.setText(pathlib.Path(file[0]).stem)
+                    button.setIconSize(QSize(350, 250))
                     self.videosLayout.addWidget(button, x, y)
-                    button.clicked.connect(self.player.onOpen(button))
+                    button.clicked.connect(self.player.onOpen(file[0]))
         
     def setLoopMusic(self):
         self.LoopMusicFlag = not self.LoopMusicFlag

@@ -1,3 +1,4 @@
+from glob import glob
 import subprocess
 import jdatetime
 import datetime
@@ -459,3 +460,27 @@ class ReadMusics(QThread):
             self.result.emit(str(e))
             log('Read Music, Unhandled Exception', str(e) + '\n')
             musicCleanup(partitionsDir)
+
+
+
+def getVideosAndPictures():
+    video_formats = ['*.mkv', '*.flv', '*.avi', '*.mp3', '*.mp4']
+    photo_formats = ['*.png', '*.jpg', '*.jpeg']
+    videos = []
+    photos = []
+    for f in video_formats:
+        videos.extend(glob(os.path.join(paths.TUTORIALS_DIR, f)))
+
+    for f in photo_formats:
+        photos.extend(glob(os.path.join(paths.TUTORIALS_DIR, f)))
+    
+    files = [[]] * len(videos)
+    for i, video in enumerate(videos):
+        for photo in photos:
+            if pathlib.Path(video).stem == pathlib.Path(photo).stem:
+                files[i] = [video, photo]
+                break
+            else:
+                files[i] = [video, None]
+
+    return files

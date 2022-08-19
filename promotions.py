@@ -1,3 +1,4 @@
+import pathlib
 import math
 import os
 
@@ -1974,15 +1975,25 @@ class Player(QFrame):
         self.btnFullscreen.setIcon(icon2)
         self.btnFullscreen.setIconSize(QSize(50, 50))
         self.btnFullscreen.setObjectName("btnFullscreen")
+        self.btnFullscreen.setStyleSheet("""
+            QPushButton {
+                border-radius:10px;
+                width:55px;
+                height:55px;
+                background-color: white;
+            }
+            QPushButton:pressed{
+                background-color: lightblue;
+            }
+        """)
         self.horizontalLayout_2.addWidget(self.btnFullscreen)
         self.horizontalLayout_2.setStretch(4, 1)
         self.verticalLayout.addWidget(self.bottomFrame)
         self.verticalLayout.setStretch(1, 1)
 
-        self.widget.clicked.connect(lambda: self.control('show'))
+        self.widget.clicked.connect(self.control)
+        self.controlIsVisible = True
 
-        self.timer = QTimer()
-        self.timer.timeout.connect(lambda: self.control('hide'))
         self.btnFullscreen.clicked.connect(self.showFullScreen)
         self.btnFullscreen.setCheckable(True)
 
@@ -2003,13 +2014,8 @@ class Player(QFrame):
         self.sliderVolume.valueChanged.connect(self.setVideoVolume)
         self.positionSlider.setRange(0, 0)
         self.positionSlider.sliderMoved.connect(self.setPosition)
-        self.positionSlider.sliderPressed.connect(lambda: self.timer.start(5000))
-        self.sliderVolume.sliderPressed.connect(lambda: self.timer.start(5000))
-        self.btnPlay.clicked.connect(lambda: self.timer.start(5000))
         self.btnClose.clicked.connect(self.close)
         self.close()
-
-        
 
     def play(self):    
         if self.mediaPlayer.state() == QMediaPlayer.PlayingState:
@@ -2039,9 +2045,8 @@ class Player(QFrame):
     def setVideoVolume(self, v):
         self.mediaPlayer.setVolume(v)
 
-    def videoSelected(self, name):
-        path = os.path.join(paths.TUTORIALS_DIR, name)
-        self.lblTitle.setText(name)
+    def videoSelected(self, path):
+        self.lblTitle.setText(pathlib.Path(path).stem)
         self.mediaPlayer.setMedia(QMediaContent(QUrl.fromLocalFile(path)))
         self.play()
     
@@ -2075,30 +2080,19 @@ class Player(QFrame):
             """)
 
         self.btnFullscreen.setIcon(icon)   
-        self.timer.start(5000)
         if not onClosing:
             self.setGeometry(pos)
                 
-    def control(self, i, force=False):
-        topH = self.topFrame.size().height()
-        if not force: 
-            if i == 'hide' and topH == 0:
-                return
-            
-            if i == 'show' and topH > 0:
-                return
-
-        if i == 'hide':
-            topH = 65
+    def control(self):
+        self.controlIsVisible = not self.controlIsVisible
+    
+        if self.controlIsVisible:
             newTopH = 0
             newBottomH = 0
-            self.timer.stop()
             
         else:
-            topH = 0
             newTopH = 65
             newBottomH = 165
-            self.timer.start(5000)
 
         self.topFrame.setMaximumHeight(newTopH)
         self.bottomFrame.setMaximumHeight(newBottomH)
@@ -2107,33 +2101,34 @@ class Player(QFrame):
         self.mediaPlayer.setMedia(QMediaContent())
         self.showFullScreen(False, onClosing=True)
         self.btnFullscreen.setChecked(False)
-        time = 400
-        if fast:
-            time = 0
+        time = 0 if fast else 400
         self.animation = QPropertyAnimation(self, b"geometry")
         self.animation.setDuration(time)
         self.animation.setStartValue(self.geometry())
-        self.animation.setEndValue(QRect(1920 // 2, 1080 // 2, 0, 0))
+        ax = (1920 - 1200) / 2
+        self.animation.setEndValue(QRect(ax, 1080 // 2, 1200, 0))
         self.animation.setEasingCurve(QEasingCurve.InOutQuart)
+        self.animation.finished.connect(self.parent().repaint)
         self.animation.start()
 
-    def onOpen(self, btn):
+    def onOpen(self, filename):
         def wrapper():
-            if self.width() <= 1: 
+            if self.height() <= 1:
                 self.btnPlay.setIcon(self.playIcon)
                 self.animation = QPropertyAnimation(self, b"geometry")
                 self.animation.setDuration(500)
-                self.animation.setStartValue(self.lower(btn.geometry()))
                 ax = (1920 - 1200) / 2
                 ay = (1080 - 680) / 2
+                self.animation.setStartValue(QRect(ax, 1080 //2 , 1200, 0))
                 self.animation.setEndValue(QRect(ax, ay , 1200, 680))
                 self.animation.setEasingCurve(QEasingCurve.InOutQuart)
                 self.animation.start()
-                self.animation.finished.connect(lambda :self.videoSelected(btn.text()))
+                self.animation.finished.connect(lambda :self.videoSelected(filename))
             else:
-                self.videoSelected(btn.text())
+                self.videoSelected(filename)
                 
-            self.control('show', force=True)
+            self.controlIsVisible = True
+            self.control()
         
         return wrapper
 
