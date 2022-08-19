@@ -1983,7 +1983,7 @@ class Player(QFrame):
                 background-color: white;
             }
             QPushButton:pressed{
-                background-color: lightblue;
+                background-color: rgb(0, 170, 255);
             }
         """)
         self.horizontalLayout_2.addWidget(self.btnFullscreen)
@@ -2046,7 +2046,7 @@ class Player(QFrame):
         self.mediaPlayer.setVolume(v)
 
     def videoSelected(self, path):
-        self.lblTitle.setText(pathlib.Path(path).stem)
+        self.lblTitle.setText(pathlib.Path(path).name)
         self.mediaPlayer.setMedia(QMediaContent(QUrl.fromLocalFile(path)))
         self.play()
     

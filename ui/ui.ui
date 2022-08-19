@@ -60,7 +60,7 @@ QScrollBar:vertical {
 }</string>
       </property>
       <property name="currentIndex">
-       <number>4</number>
+       <number>7</number>
       </property>
       <widget class="QWidget" name="adssPage">
        <property name="styleSheet">
@@ -3396,7 +3396,7 @@ QPushButton:pressed{
                       <rect>
                        <x>0</x>
                        <y>0</y>
-                       <width>1210</width>
+                       <width>896</width>
                        <height>824</height>
                       </rect>
                      </property>
@@ -8154,10 +8154,10 @@ border:3px solid red;
                 <property name="styleSheet">
                  <string notr="true">QPushButton {
 background-color: rgb(0, 0, 0);
-	min-width:350;
-	min-height:250;
-	max-width:350;
-	max-height:250;
+	min-width:410;
+	min-height:290;
+	max-width:410;
+	max-height:290;
 	border:5px solid white;
     border-radius:10px;
 	color:white;

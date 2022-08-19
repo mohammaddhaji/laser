@@ -1266,8 +1266,8 @@ class MainWin(QMainWindow):
         ax = (1920 - self.player.size().width()) // 2
         ay = (1080 - self.player.size().height()) // 2
         self.player.move(ax, ay)
-        files = utility.getVideosAndPictures()
 
+        files = utility.getVideosAndPictures()
         rows = len(files) // 3 if len(files) % 3 == 0 else len(files) // 3 + 1
         if not rows:
             lblTutorialMsg = QLabel(lang.TEXT['lblTutorialMsg'][self.langIndex])
@@ -1284,8 +1284,8 @@ class MainWin(QMainWindow):
                     if file[1]:
                         button.setIcon(QIcon(file[1]))
                     else:
-                        button.setText(pathlib.Path(file[0]).stem)
-                    button.setIconSize(QSize(350, 250))
+                        button.setText(pathlib.Path(file[0]).name)
+                    button.setIconSize(QSize(410, 290))
                     self.videosLayout.addWidget(button, x, y)
                     button.clicked.connect(self.player.onOpen(file[0]))
         
