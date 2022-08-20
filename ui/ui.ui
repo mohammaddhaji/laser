@@ -8162,12 +8162,13 @@ background-color: rgb(0, 0, 0);
     border-radius:10px;
 	color:white;
 	font: 14pt &quot;Arial&quot;;
-	margin-bottom:120px;
+	margin-top:20px;
+	margin-bottom:100px;
 }</string>
                 </property>
                 <layout class="QGridLayout" name="videosLayout">
                  <property name="topMargin">
-                  <number>100</number>
+                  <number>20</number>
                  </property>
                 </layout>
                </widget>
