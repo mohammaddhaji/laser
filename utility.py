@@ -476,11 +476,9 @@ def getVideosAndPictures():
     
     files = [[]] * len(videos)
     for i, video in enumerate(videos):
+        files[i] = [video, None]
         for photo in photos:
             if pathlib.Path(video).stem == pathlib.Path(photo).stem:
                 files[i] = [video, photo]
-                break
-            else:
-                files[i] = [video, None]
 
     return files
