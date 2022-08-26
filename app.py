@@ -1,3 +1,4 @@
+from genericpath import isfile
 import pathlib
 import jdatetime
 import hashlib
@@ -6,6 +7,7 @@ import time
 import math
 import sys
 import os
+from glob import glob
 from itertools import chain
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 
@@ -186,12 +188,13 @@ class MainWin(QMainWindow):
         self.selectedBodyPart.setGeometry(1600,650, 600, 600)
         self.updateSystemTime(edit=True)
         self.initHwTest()
-        self.intiTutorials()   
+        self.initTutorials()   
         self.initPages()
         self.initTimers()
         self.initButtons()
         self.initTables()
         self.initTextboxes()
+        self.initThemes()
         self.changeTheme(self.configs['Theme'])
         self.changeSliderColor(styles.SLIDER_GB, styles.SLIDER_GW)
         self.loadLocksTable()
@@ -429,22 +432,6 @@ class MainWin(QMainWindow):
         self.selectAllFlag = False
         self.btnLoop.clicked.connect(self.setLoopMusic)
         self.LoopMusicFlag = self.configs['LoopMusic']
-        self.btnColor1.setStyleSheet(styles.BTN_COLOR1)
-        self.btnColor2.setStyleSheet(styles.BTN_COLOR2)
-        self.btnColor3.setStyleSheet(styles.BTN_COLOR3)
-        self.btnColor4.setStyleSheet(styles.BTN_COLOR4)
-        self.btnTheme1.setStyleSheet(styles.BTN_THEME1)
-        self.btnTheme2.setStyleSheet(styles.BTN_THEME2)
-        self.btnTheme3.setStyleSheet(styles.BTN_THEME3)
-        self.btnTheme4.setStyleSheet(styles.BTN_THEME4)
-        self.btnColor1.clicked.connect(lambda: self.changeTheme('C1'))
-        self.btnColor2.clicked.connect(lambda: self.changeTheme('C2'))
-        self.btnColor3.clicked.connect(lambda: self.changeTheme('C3'))
-        self.btnColor4.clicked.connect(lambda: self.changeTheme('C4'))
-        self.btnTheme1.clicked.connect(lambda: self.changeTheme('T1'))
-        self.btnTheme2.clicked.connect(lambda: self.changeTheme('T2'))        
-        self.btnTheme3.clicked.connect(lambda: self.changeTheme('T3'))
-        self.btnTheme4.clicked.connect(lambda: self.changeTheme('T4')) 
         sensors = [
             'btnPhysicalDamage', 'btnOverHeat', 'btnTemp',
             'btnLock', 'btnWaterLevel', 'btnWaterflow',
@@ -484,6 +471,27 @@ class MainWin(QMainWindow):
             if btn.objectName() == 'btnSaveHw':
                 continue
             btn.clicked.connect(self.settingsMenuSelected(btn))
+    
+    def initThemes(self):
+        photos = []
+        for f in ['.png', '.jpg', '.jpeg']:
+            photos.extend(glob(os.path.join('ui/images/themes', '*' + f)))
+
+        cols = 2
+        rows = len(photos) // cols if len(photos) % cols == 0 else len(photos) // cols + 1
+
+        def makeSlot(x):
+            return lambda : self.changeTheme(x)
+
+        for x in range(rows):
+            for y in range(cols):
+                if photos:
+                    photo = photos.pop()
+                    btn = QPushButton()
+                    btn.setIconSize(QSize(150, 100))
+                    btn.setIcon(QIcon(QPixmap(photo).scaled(150, 100)))
+                    btn.clicked.connect(makeSlot(photo))
+                    self.themeLayout.addWidget(btn, x, y)
 
     def initTextboxes(self):
         self.txtNumber.returnPressed.connect(self.startSession)
@@ -684,42 +692,34 @@ class MainWin(QMainWindow):
     def changeTheme(self, theme):
         inc = QIcon()
         dec = QIcon()
-        if theme in ['C1', 'C2', 'C4']:
-            self.sliderEnergyCalib.setStyleSheet(styles.SLIDER_GB)
-            self.sliderFrequencyCalib.setStyleSheet(styles.SLIDER_GB)
-            self.sliderPulseWidthCalib.setStyleSheet(styles.SLIDER_DISABLED_GB)
-            self.dacSlider.setStyleSheet(styles.SLIDER_GB)
-            inc.addPixmap(QPixmap(paths.INC_BLACK))
-            dec.addPixmap(QPixmap(paths.DEC_BLACK))
-        else:          
+        if utility.is_dark(theme):
             self.sliderEnergyCalib.setStyleSheet(styles.SLIDER_GW)           
             self.sliderFrequencyCalib.setStyleSheet(styles.SLIDER_GW)
             self.sliderPulseWidthCalib.setStyleSheet(styles.SLIDER_DISABLED_GW)
             self.dacSlider.setStyleSheet(styles.SLIDER_GW)
             inc.addPixmap(QPixmap(paths.INC_BLUE))
             dec.addPixmap(QPixmap(paths.DEC_BLUE))
+        else:          
+            self.sliderEnergyCalib.setStyleSheet(styles.SLIDER_GB)
+            self.sliderFrequencyCalib.setStyleSheet(styles.SLIDER_GB)
+            self.sliderPulseWidthCalib.setStyleSheet(styles.SLIDER_DISABLED_GB)
+            self.dacSlider.setStyleSheet(styles.SLIDER_GB)
+            inc.addPixmap(QPixmap(paths.INC_BLACK))
+            dec.addPixmap(QPixmap(paths.DEC_BLACK))
 
         self.btnDecDac.setIcon(dec)
         self.btnIncDac.setIcon(inc)
+        style = """QWidget#centralwidget {{
+                    border-image: url(ui/images/themes/{0}) 0 0 0 0 stretch stretch;
+                }}""".format(pathlib.Path(theme).name)
+        
+        if os.path.isfile(theme):
+            self.centralWidget().setStyleSheet(style)
+        else:
+            self.centralWidget().setStyleSheet('background-color: rgb(32, 74, 135)')
 
-        if theme == 'T1':
-            self.centralWidget().setStyleSheet(styles.THEME1)
-        elif theme == 'T2':
-            self.centralWidget().setStyleSheet(styles.THEME2)
-        elif theme == 'T3':
-            self.centralWidget().setStyleSheet(styles.THEME3)
-        elif theme == 'T4':
-            self.centralWidget().setStyleSheet(styles.THEME4)
-        elif theme == 'C1':
-            self.centralWidget().setStyleSheet(styles.COLOR1)
-        elif theme == 'C2':
-            self.centralWidget().setStyleSheet(styles.COLOR2)
-        elif theme == 'C3':
-            self.centralWidget().setStyleSheet(styles.COLOR3)
-        elif theme == 'C4':
-            self.centralWidget().setStyleSheet(styles.COLOR4)
 
-        if theme.startswith('T') or theme == 'C3':
+        if utility.is_dark(theme):
             self.po.setStyleSheet(styles.POWER_OPTION_L)
         else:
             self.po.setStyleSheet(styles.POWER_OPTION_D)
@@ -1261,7 +1261,7 @@ class MainWin(QMainWindow):
             self.playlist.setPlaybackMode(QMediaPlaylist.CurrentItemInLoop)
         self.btnLoop.setIconSize(QSize(80, 80))
 
-    def intiTutorials(self):
+    def initTutorials(self):
         self.player = promotions.Player(self.tutorialPage)
         ax = (1920 - self.player.size().width()) // 2
         ay = (1080 - self.player.size().height()) // 2

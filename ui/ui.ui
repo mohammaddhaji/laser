@@ -60,7 +60,7 @@ QScrollBar:vertical {
 }</string>
       </property>
       <property name="currentIndex">
-       <number>7</number>
+       <number>6</number>
       </property>
       <widget class="QWidget" name="adssPage">
        <property name="styleSheet">
@@ -2479,7 +2479,7 @@ border:3px solid red;
         <item>
          <widget class="StackedWidget" name="stackedWidgetSettings">
           <property name="currentIndex">
-           <number>2</number>
+           <number>1</number>
           </property>
           <widget class="QWidget" name="settingsMenuPage">
            <layout class="QVBoxLayout" name="verticalLayout_51">
@@ -3109,28 +3109,27 @@ QPushButton:pressed{
                  </layout>
                 </item>
                 <item>
-                 <layout class="QVBoxLayout" name="verticalLayout_85" stretch="2,3,1,0,1">
+                 <layout class="QVBoxLayout" name="verticalLayout_85" stretch="1,5">
+                  <property name="leftMargin">
+                   <number>50</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>50</number>
+                  </property>
                   <property name="rightMargin">
-                   <number>0</number>
+                   <number>50</number>
                   </property>
                   <property name="bottomMargin">
                    <number>0</number>
                   </property>
                   <item>
-                   <spacer name="verticalSpacer_86">
-                    <property name="orientation">
-                     <enum>Qt::Vertical</enum>
-                    </property>
-                    <property name="sizeHint" stdset="0">
+                   <widget class="QLabel" name="lblTheme">
+                    <property name="minimumSize">
                      <size>
-                      <width>20</width>
-                      <height>40</height>
+                      <width>0</width>
+                      <height>0</height>
                      </size>
                     </property>
-                   </spacer>
-                  </item>
-                  <item>
-                   <widget class="QLabel" name="lblTheme">
                     <property name="font">
                      <font>
                       <family>Arial</family>
@@ -3146,171 +3145,71 @@ QPushButton:pressed{
                    </widget>
                   </item>
                   <item>
-                   <spacer name="verticalSpacer_85">
-                    <property name="orientation">
-                     <enum>Qt::Vertical</enum>
+                   <widget class="QScrollArea" name="scrollArea_3">
+                    <property name="styleSheet">
+                     <string notr="true">background: transparent;</string>
                     </property>
-                    <property name="sizeHint" stdset="0">
-                     <size>
-                      <width>20</width>
-                      <height>40</height>
-                     </size>
+                    <property name="frameShape">
+                     <enum>QFrame::NoFrame</enum>
                     </property>
-                   </spacer>
-                  </item>
-                  <item>
-                   <layout class="QGridLayout" name="gridLayout_5">
-                    <property name="spacing">
-                     <number>20</number>
+                    <property name="widgetResizable">
+                     <bool>true</bool>
                     </property>
-                    <item row="2" column="1">
-                     <widget class="QPushButton" name="btnTheme1">
-                      <property name="minimumSize">
-                       <size>
-                        <width>0</width>
-                        <height>0</height>
-                       </size>
+                    <widget class="QWidget" name="scrollAreaWidgetContents_3">
+                     <property name="geometry">
+                      <rect>
+                       <x>0</x>
+                       <y>0</y>
+                       <width>423</width>
+                       <height>395</height>
+                      </rect>
+                     </property>
+                     <property name="styleSheet">
+                      <string notr="true">QPushButton{
+    min-width: 150px;
+    min-height: 100px;
+    max-width: 150px;
+    max-height: 100px;
+    border:5px solid white;
+    border-radius:10px;
+}
+QPushButton:pressed{
+    border:5px solid red;
+}</string>
+                     </property>
+                     <layout class="QVBoxLayout" name="verticalLayout_45">
+                      <property name="topMargin">
+                       <number>11</number>
                       </property>
-                      <property name="styleSheet">
-                       <string notr="true"/>
+                      <property name="bottomMargin">
+                       <number>11</number>
                       </property>
-                      <property name="text">
-                       <string/>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="2" column="2">
-                     <widget class="QPushButton" name="btnTheme2">
-                      <property name="minimumSize">
-                       <size>
-                        <width>0</width>
-                        <height>0</height>
-                       </size>
-                      </property>
-                      <property name="styleSheet">
-                       <string notr="true"/>
-                      </property>
-                      <property name="text">
-                       <string/>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="1" column="2">
-                     <widget class="QPushButton" name="btnColor4">
-                      <property name="text">
-                       <string/>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="3" column="1">
-                     <widget class="QPushButton" name="btnTheme3">
-                      <property name="minimumSize">
-                       <size>
-                        <width>0</width>
-                        <height>0</height>
-                       </size>
-                      </property>
-                      <property name="font">
-                       <font>
-                        <family>MS Reference Sans Serif</family>
-                       </font>
-                      </property>
-                      <property name="styleSheet">
-                       <string notr="true"/>
-                      </property>
-                      <property name="text">
-                       <string/>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="3" column="2">
-                     <widget class="QPushButton" name="btnTheme4">
-                      <property name="text">
-                       <string/>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="0" column="1">
-                     <widget class="QPushButton" name="btnColor1">
-                      <property name="minimumSize">
-                       <size>
-                        <width>0</width>
-                        <height>0</height>
-                       </size>
-                      </property>
-                      <property name="maximumSize">
-                       <size>
-                        <width>16777215</width>
-                        <height>16777215</height>
-                       </size>
-                      </property>
-                      <property name="font">
-                       <font>
-                        <family>MS Reference Sans Serif</family>
-                       </font>
-                      </property>
-                      <property name="styleSheet">
-                       <string notr="true"/>
-                      </property>
-                      <property name="text">
-                       <string/>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="0" column="2">
-                     <widget class="QPushButton" name="btnColor2">
-                      <property name="text">
-                       <string/>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="1" column="1">
-                     <widget class="QPushButton" name="btnColor3">
-                      <property name="text">
-                       <string/>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="0" column="3">
-                     <spacer name="horizontalSpacer_64">
-                      <property name="orientation">
-                       <enum>Qt::Horizontal</enum>
-                      </property>
-                      <property name="sizeHint" stdset="0">
-                       <size>
-                        <width>40</width>
-                        <height>20</height>
-                       </size>
-                      </property>
-                     </spacer>
-                    </item>
-                    <item row="0" column="0">
-                     <spacer name="horizontalSpacer_110">
-                      <property name="orientation">
-                       <enum>Qt::Horizontal</enum>
-                      </property>
-                      <property name="sizeHint" stdset="0">
-                       <size>
-                        <width>40</width>
-                        <height>20</height>
-                       </size>
-                      </property>
-                     </spacer>
-                    </item>
-                   </layout>
-                  </item>
-                  <item>
-                   <spacer name="verticalSpacer_84">
-                    <property name="orientation">
-                     <enum>Qt::Vertical</enum>
-                    </property>
-                    <property name="sizeHint" stdset="0">
-                     <size>
-                      <width>20</width>
-                      <height>40</height>
-                     </size>
-                    </property>
-                   </spacer>
+                      <item>
+                       <layout class="QGridLayout" name="themeLayout">
+                        <property name="topMargin">
+                         <number>0</number>
+                        </property>
+                        <property name="spacing">
+                         <number>20</number>
+                        </property>
+                       </layout>
+                      </item>
+                      <item>
+                       <spacer name="verticalSpacer_74">
+                        <property name="orientation">
+                         <enum>Qt::Vertical</enum>
+                        </property>
+                        <property name="sizeHint" stdset="0">
+                         <size>
+                          <width>20</width>
+                          <height>40</height>
+                         </size>
+                        </property>
+                       </spacer>
+                      </item>
+                     </layout>
+                    </widget>
+                   </widget>
                   </item>
                  </layout>
                 </item>
@@ -8132,8 +8031,8 @@ border:3px solid red;
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>1618</width>
-               <height>678</height>
+               <width>98</width>
+               <height>31</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_36">
@@ -10381,7 +10280,7 @@ border: 1px solid white;
              <string notr="true">background: transparent;</string>
             </property>
             <property name="currentIndex">
-             <number>1</number>
+             <number>0</number>
             </property>
             <widget class="QWidget" name="bodyPartPage">
              <layout class="QVBoxLayout" name="verticalLayout_25">
@@ -10741,18 +10640,25 @@ border: 10px solid rgb(255, 255, 255);
                      <string notr="true">QPushButton {
 background-color: rgb(213, 213, 213);
 color: rgb(0, 0, 0);
-
-border-radius: 15px;
-
+border-top-left-radius: 15px;
+border-top-right-radius: 15px;
+border:1px solid rgb(213, 213, 213);
 outline:0;
 }
 QPushButton:pressed{
 background-color: rgb(0, 170, 255);
-
-}</string>
+}
+QLabel{
+background-color: rgb(11, 14, 84);
+border-bottom-left-radius: 15px;
+border-bottom-right-radius: 15px;
+min-height:45px;
+border:1px solid rgb(213, 213, 213);
+}
+</string>
                     </property>
                     <property name="currentIndex">
-                     <number>0</number>
+                     <number>1</number>
                     </property>
                     <widget class="QWidget" name="femalePage">
                      <layout class="QVBoxLayout" name="verticalLayout_32">
@@ -10776,6 +10682,9 @@ background-color: rgb(0, 170, 255);
                         <item>
                          <layout class="QGridLayout" name="fBodyPartsLayout" columnstretch="0,0,0,0,0">
                           <property name="bottomMargin">
+                           <number>0</number>
+                          </property>
+                          <property name="verticalSpacing">
                            <number>0</number>
                           </property>
                           <item row="2" column="2">
@@ -10871,6 +10780,9 @@ background-color: rgb(0, 170, 255);
                               <family>Arial</family>
                               <pointsize>20</pointsize>
                              </font>
+                            </property>
+                            <property name="styleSheet">
+                             <string notr="true"/>
                             </property>
                             <property name="text">
                              <string>Face</string>
@@ -11072,6 +10984,9 @@ background-color: rgb(0, 170, 255);
                         <item>
                          <layout class="QGridLayout" name="mBodyPartsLayout" rowstretch="0,0,0,0,0,0,0" columnstretch="0,0,0,0,0">
                           <property name="bottomMargin">
+                           <number>0</number>
+                          </property>
+                          <property name="verticalSpacing">
                            <number>0</number>
                           </property>
                           <item row="2" column="4">
@@ -12123,7 +12038,7 @@ border: 1px solid white;
       </widget>
      </widget>
     </item>
-    <item alignment="Qt::AlignHCenter">
+    <item alignment="Qt::AlignHCenter|Qt::AlignVCenter">
      <widget class="QFrame" name="keyboardFrame">
       <property name="minimumSize">
        <size>

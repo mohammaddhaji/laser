@@ -1,4 +1,6 @@
+from genericpath import isfile
 from glob import glob
+from PIL import Image
 import subprocess
 import jdatetime
 import datetime
@@ -464,15 +466,15 @@ class ReadMusics(QThread):
 
 
 def getVideosAndPictures():
-    video_formats = ['*.mkv', '*.flv', '*.avi', '*.mp3', '*.mp4']
-    photo_formats = ['*.png', '*.jpg', '*.jpeg']
+    video_formats = ['.mkv', '.flv', '.avi', '.mp3', '.mp4']
+    photo_formats = ['.png', '.jpg', '.jpeg']
     videos = []
     photos = []
     for f in video_formats:
-        videos.extend(glob(os.path.join(paths.TUTORIALS_DIR, f)))
+        videos.extend(glob(os.path.join(paths.TUTORIALS_DIR, '*' + f)))
 
     for f in photo_formats:
-        photos.extend(glob(os.path.join(paths.TUTORIALS_DIR, f)))
+        photos.extend(glob(os.path.join(paths.TUTORIALS_DIR, '*' + f)))
     
     files = [[]] * len(videos)
     for i, video in enumerate(videos):
@@ -482,3 +484,13 @@ def getVideosAndPictures():
                 files[i] = [video, photo]
 
     return files
+
+
+def is_dark(photo):
+    if os.path.isfile(photo):
+        img = Image.open(photo).convert('L')
+        img.thumbnail((1, 1))
+        avg = img.getpixel((0, 0))
+        return avg < 127
+    else:
+        return False
