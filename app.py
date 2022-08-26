@@ -1,4 +1,3 @@
-from genericpath import isfile
 import pathlib
 import jdatetime
 import hashlib
