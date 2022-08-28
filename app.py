@@ -1216,7 +1216,7 @@ class MainWin(QMainWindow):
             name = os.path.basename(path)
             rowPosition = self.tableMusic.rowCount()
             self.tableMusic.insertRow(rowPosition)
-            item = QPropertyAnimation(name)
+            item = QTableWidgetItem(name)
             item.setTextAlignment(Qt.AlignLeft | Qt.AlignVCenter)
             self.tableMusic.setItem(rowPosition, 0, item)
 
