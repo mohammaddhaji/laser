@@ -187,7 +187,7 @@ TEXT = {
     'btnLoadMusic': ['Load', 'بارگذاری'],
     'txtResetCounterPass': ['Password', 'رمز'],
     'btnResetCounterPass': ['Reset', 'ریست'],
-    'btnHwTesst': ['Hardware Test', 'تست سیستم'],
+    'btnHwTest': ['Hardware Test', 'تست سیستم'],
     'lblcpRightPass': ['Passwoed', 'رمز عبور'],
     'lblYourId': ['ID', 'شناسه'],
     'lblLicPass': ['Passwoed', 'رمز عبور'],

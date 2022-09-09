@@ -249,7 +249,7 @@ def loadConfigs():
                 'VideoVolume': 50,
                 'LoopMusic': True,
                 'FutureSessionsDays': 1,
-                'Theme': 'C1',
+                'Theme': '',
                 'OwnerInfo': '',
                 'SerialNumber': '',
                 'TotalShotCounter': 0,

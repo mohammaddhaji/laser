@@ -329,9 +329,9 @@ class MainWin(QMainWindow):
         self.btnSubmit.clicked.connect(self.submitNewUser)
         self.btnSystemLogs.clicked.connect(self.hwPageChanged)
         self.btnSystemLogs.clicked.connect(self.enterLogsPage)
-        self.btnHwTesst.clicked.connect(lambda: self.hwStackedWidget.setCurrentWidget(self.hwTestPage))
-        self.btnHwTesst.clicked.connect(self.hwPageChanged)
-        self.btnHwTesst.clicked.connect(lambda: communication.enterPage(communication.HARDWARE_TEST_PAGE))
+        self.btnHwTest.clicked.connect(lambda: self.hwStackedWidget.setCurrentWidget(self.hwTestPage))
+        self.btnHwTest.clicked.connect(self.hwPageChanged)
+        self.btnHwTest.clicked.connect(lambda: communication.enterPage(communication.HARDWARE_TEST_PAGE))
         self.btnMusic.clicked.connect(lambda: self.changeAnimation('horizontal'))
         self.btnMusic.clicked.connect(lambda: self.stackedWidget.setCurrentWidget(self.musicPage))
         self.btnBackMusic.clicked.connect(lambda: self.stackedWidget.setCurrentWidget(self.mainPage))
@@ -474,7 +474,7 @@ class MainWin(QMainWindow):
     def initThemes(self):
         photos = []
         for f in ['.png', '.jpg', '.jpeg']:
-            photos.extend(glob(os.path.join('ui/images/themes', '*' + f)))
+            photos.extend(glob(os.path.join(paths.THEMES_DIR, '*' + f)))
 
         cols = 2
         rows = len(photos) // cols if len(photos) % cols == 0 else len(photos) // cols + 1
@@ -489,6 +489,7 @@ class MainWin(QMainWindow):
                     btn = QPushButton()
                     btn.setIconSize(QSize(150, 100))
                     btn.setIcon(QIcon(QPixmap(photo).scaled(150, 100)))
+                    btn.clicked.connect(lambda: self.playTouchSound('t'))
                     btn.clicked.connect(makeSlot(photo))
                     self.themeLayout.addWidget(btn, x, y)
 
@@ -569,10 +570,10 @@ class MainWin(QMainWindow):
         self.dacSlider.doubleValueChanged.connect(self.setDacSlidrColor)
     
     def setDacSlidrColor(self):
-        if self.configs['Theme'] in ['C1', 'C2', 'C4']:
-            self.dacSlider.setStyleSheet(styles.DAC_SLIDER_B_CHANGED)
-        else:
+        if utility.is_dark(self.configs['Theme']):
             self.dacSlider.setStyleSheet(styles.DAC_SLIDER_W_CHANGED)
+        else:
+            self.dacSlider.setStyleSheet(styles.DAC_SLIDER_B_CHANGED)
 
     def setDac(self, operation='set', value=0):
         if operation == 'inc':
@@ -689,25 +690,25 @@ class MainWin(QMainWindow):
         self.calibrationPageActive = False
 
     def changeTheme(self, theme):
-        inc = QIcon()
-        dec = QIcon()
+        incIcon = QIcon()
+        decIcon = QIcon()
         if utility.is_dark(theme):
             self.sliderEnergyCalib.setStyleSheet(styles.SLIDER_GW)           
             self.sliderFrequencyCalib.setStyleSheet(styles.SLIDER_GW)
             self.sliderPulseWidthCalib.setStyleSheet(styles.SLIDER_DISABLED_GW)
             self.dacSlider.setStyleSheet(styles.SLIDER_GW)
-            inc.addPixmap(QPixmap(paths.INC_BLUE))
-            dec.addPixmap(QPixmap(paths.DEC_BLUE))
-        else:          
+            incIcon.addPixmap(QPixmap(paths.INC_BLUE))
+            decIcon.addPixmap(QPixmap(paths.DEC_BLUE))
+        else:        
             self.sliderEnergyCalib.setStyleSheet(styles.SLIDER_GB)
             self.sliderFrequencyCalib.setStyleSheet(styles.SLIDER_GB)
             self.sliderPulseWidthCalib.setStyleSheet(styles.SLIDER_DISABLED_GB)
             self.dacSlider.setStyleSheet(styles.SLIDER_GB)
-            inc.addPixmap(QPixmap(paths.INC_BLACK))
-            dec.addPixmap(QPixmap(paths.DEC_BLACK))
+            incIcon.addPixmap(QPixmap(paths.INC_BLACK))
+            decIcon.addPixmap(QPixmap(paths.DEC_BLACK))
 
-        self.btnDecDac.setIcon(dec)
-        self.btnIncDac.setIcon(inc)
+        self.btnDecDac.setIcon(decIcon)
+        self.btnIncDac.setIcon(incIcon)
         style = """QWidget#centralwidget {{
                     border-image: url(ui/images/themes/{0}) 0 0 0 0 stretch stretch;
                 }}""".format(pathlib.Path(theme).name)
@@ -1537,16 +1538,16 @@ class MainWin(QMainWindow):
                 communication.laserPage({'cooling': self.cooling})
 
     def changeSliderColor(self, c1, c2):
-        if self.configs['Theme'] in ['C1', 'C2', 'C4']:
-            self.sliderEnergyCalib.setStyleSheet(c1)
-            self.sliderFrequencyCalib.setStyleSheet(c1)
-            self.sliderPulseWidthCalib.setStyleSheet(styles.SLIDER_DISABLED_GB)
-            self.dacSlider.setStyleSheet(c1)
-        else:
+        if utility.is_dark(self.configs['Theme']):
             self.sliderEnergyCalib.setStyleSheet(c2)
             self.sliderFrequencyCalib.setStyleSheet(c2)             
             self.sliderPulseWidthCalib.setStyleSheet(styles.SLIDER_DISABLED_GW)
             self.dacSlider.setStyleSheet(c2)
+        else:
+            self.sliderEnergyCalib.setStyleSheet(c1)
+            self.sliderFrequencyCalib.setStyleSheet(c1)
+            self.sliderPulseWidthCalib.setStyleSheet(styles.SLIDER_DISABLED_GB)
+            self.dacSlider.setStyleSheet(c1)
 
     def setEnergy(self, operation):
         e = self.energy

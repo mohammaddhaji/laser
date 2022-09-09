@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1642</width>
-    <height>832</height>
+    <height>834</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -211,12 +211,16 @@ QScrollBar:vertical {
                    <string notr="true">QPushButton {
 outline:0;
 border-radius:50px;
+min-width:100px;
+min-height:100px;
+max-width:100px;
+max-height:100px;
+background:white;
+border:1px solid white;
 }
-QPushButton:hover:!pressed{
-border:3px solid white;
-}
+
 QPushButton:pressed{
-border:3px solid red;
+border:5px solid red;
 }
 </string>
                   </property>
@@ -1764,12 +1768,16 @@ border: 1px solid white;
                  <string notr="true">QPushButton {
 outline:0;
 border-radius:50px;
+min-width:100px;
+min-height:100px;
+max-width:100px;
+max-height:100px;
+background:white;
+border:1px solid white;
 }
-QPushButton:hover:!pressed{
-border:3px solid white;
-}
+
 QPushButton:pressed{
-border:3px solid red;
+border:5px solid red;
 }
 </string>
                 </property>
@@ -2393,12 +2401,16 @@ margin: 10px 0 0 0;
                <string notr="true">QPushButton {
 outline:0;
 border-radius:50px;
+min-width:100px;
+min-height:100px;
+max-width:100px;
+max-height:100px;
+background:white;
+border:1px solid white;
 }
-QPushButton:hover:!pressed{
-border:3px solid white;
-}
+
 QPushButton:pressed{
-border:3px solid red;
+border:5px solid red;
 }
 </string>
               </property>
@@ -2479,7 +2491,7 @@ border:3px solid red;
         <item>
          <widget class="StackedWidget" name="stackedWidgetSettings">
           <property name="currentIndex">
-           <number>1</number>
+           <number>2</number>
           </property>
           <widget class="QWidget" name="settingsMenuPage">
            <layout class="QVBoxLayout" name="verticalLayout_51">
@@ -3295,7 +3307,7 @@ QPushButton:pressed{
                       <rect>
                        <x>0</x>
                        <y>0</y>
-                       <width>896</width>
+                       <width>1210</width>
                        <height>824</height>
                       </rect>
                      </property>
@@ -7836,7 +7848,7 @@ border: 10px solid rgb(77, 77, 77);
                   </widget>
                  </item>
                  <item>
-                  <widget class="QPushButton" name="btnHwTesst">
+                  <widget class="QPushButton" name="btnHwTest">
                    <property name="font">
                     <font>
                      <family>Arial</family>
@@ -7930,13 +7942,16 @@ border: 10px solid rgb(77, 77, 77);
                  <string notr="true">QPushButton {
 outline:0;
 border-radius:50px;
+min-width:100px;
+min-height:100px;
+max-width:100px;
+max-height:100px;
+background:white;
+border:1px solid white;
+}
 
-}
-QPushButton:hover:!pressed{
-border:3px solid white;
-}
 QPushButton:pressed{
-border:3px solid red;
+border:5px solid red;
 }
 </string>
                 </property>
@@ -8031,8 +8046,8 @@ border:3px solid red;
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>98</width>
-               <height>31</height>
+               <width>1618</width>
+               <height>678</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_36">
@@ -8109,13 +8124,16 @@ background-color: rgb(0, 0, 0);
                  <string notr="true">QPushButton {
 outline:0;
 border-radius:50px;
+min-width:100px;
+min-height:100px;
+max-width:100px;
+max-height:100px;
+background:white;
+border:1px solid white;
+}
 
-}
-QPushButton:hover:!pressed{
-border:3px solid white;
-}
 QPushButton:pressed{
-border:3px solid red;
+border:5px solid red;
 }
 </string>
                 </property>
@@ -8665,13 +8683,16 @@ border: 10px solid rgb(0, 170, 255);
                  <string notr="true">QPushButton {
 outline:0;
 border-radius:50px;
+min-width:100px;
+min-height:100px;
+max-width:100px;
+max-height:100px;
+background:white;
+border:1px solid white;
+}
 
-}
-QPushButton:hover:!pressed{
-border:3px solid white;
-}
 QPushButton:pressed{
-border:3px solid red;
+border:5px solid red;
 }
 </string>
                 </property>
@@ -9203,13 +9224,16 @@ border: 1px solid white;
                  <string notr="true">QPushButton {
 outline:0;
 border-radius:50px;
+min-width:100px;
+min-height:100px;
+max-width:100px;
+max-height:100px;
+background:white;
+border:1px solid white;
+}
 
-}
-QPushButton:hover:!pressed{
-border:3px solid white;
-}
 QPushButton:pressed{
-border:3px solid red;
+border:5px solid red;
 }
 </string>
                 </property>
@@ -9926,13 +9950,16 @@ border: 1px solid white;
                  <string notr="true">QPushButton {
 outline:0;
 border-radius:50px;
+min-width:100px;
+min-height:100px;
+max-width:100px;
+max-height:100px;
+background:white;
+border:1px solid white;
+}
 
-}
-QPushButton:hover:!pressed{
-border:3px solid white;
-}
 QPushButton:pressed{
-border:3px solid red;
+border:5px solid red;
 }
 </string>
                 </property>
