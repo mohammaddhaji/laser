@@ -1,4 +1,3 @@
-from genericpath import isfile
 from glob import glob
 from PIL import Image
 import subprocess
@@ -124,45 +123,28 @@ def getDiff(date):
 
 def getCoeffIndex(value, interval = False):
     if value <= 30:
-        if interval:
-            return 0, "[20, 30]"
-        else:
-            return 0
+        return (0, "[20, 30]") if interval else 0
+        
     elif value <= 40:
-        if interval:
-            return 1, "(30, 40]"
-        else:
-            return 1
+        return (1, "(30, 40]") if interval else 1
+        
     elif value <= 50:
-        if interval:
-            return 2, "(40, 50]"
-        else:
-            return 2
+        return (2, "(40, 50]") if interval else 2
+        
     elif value <= 60:
-        if interval:
-            return 3, "(50, 60]"
-        else:
-            return 3
+        return (3, "(50, 60]") if interval else 3
+
     elif value <= 70:
-        if interval:
-            return 4, "(60, 70]"
-        else:
-            return 4
+        return (4, "(60, 70]") if interval else 4
+
     elif value <= 80:
-        if interval:
-            return 5, "(70, 80]"
-        else:
-            return 5
+        return (5, "(70, 80]") if interval else 5
+
     elif value <= 90:
-        if interval:
-            return 6, "(80, 90]"
-        else:
-            return 6
+        return (6, "(80, 90]") if interval else 6
+
     elif value <= 100:
-        if interval:
-            return 7, "(90, 100]"
-        else:
-            return 7
+        return (7, "(90, 100]") if interval else 7
 
 
 def addExtenstion(file):
@@ -204,12 +186,7 @@ def genLicense():
     LICENSE2 = (LicID - LicID % 10) + 2
     LICENSE3 = (LicID - LicID % 10) + 3
 
-    lic = {
-        '1': LICENSE1,
-        '2': LICENSE2,
-        '3': LICENSE3,
-    }
-    return lic
+    return {'1': LICENSE1, '2': LICENSE2, '3': LICENSE3}
 
 
 def EncryptDecrypt(filename, key):

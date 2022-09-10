@@ -1,6 +1,5 @@
 import pathlib
 import math
-import os
 
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtMultimediaWidgets import QVideoWidget
@@ -9,8 +8,8 @@ from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from werkzeug.utils import cached_property
 
-from communication import HARDWARE_TEST_PAGE, READ, sendPacket
-from utility import calcPosition
+import communication
+import utility
 import styles 
 import paths 
 
@@ -607,7 +606,11 @@ class Relay:
         self.relay.setEnabled(False)
         self.movie.start()
         self.relayTimer.start(3500)
-        sendPacket({'relay':self.field}, {'relay': ''}, HARDWARE_TEST_PAGE, READ)
+        communication.sendPacket(
+            {'relay':self.field}, {'relay': ''}, 
+            communication.HARDWARE_TEST_PAGE, 
+            communication.READ
+        )
         
     def relayFinish(self):
         self.relayTimer.stop()
@@ -674,7 +677,11 @@ class DriverCurrent:
         self.timer.start(2000)
         self.movie.start()
         self.btnStart.setEnabled(False)
-        sendPacket({'driver': self.field}, {'driver': ''}, HARDWARE_TEST_PAGE, READ)
+        communication.sendPacket(
+            {'driver': self.field}, {'driver': ''}, 
+            communication.HARDWARE_TEST_PAGE, 
+            communication.READ
+        )
 
     def setValue(self, value):
         if self.isListening:
@@ -2034,11 +2041,11 @@ class Player(QFrame):
 
     def positionChanged(self, position):
         self.positionSlider.setValue(position)
-        current = '{:02d}:{:02d}:{:02d} / '.format(*calcPosition(position)) + self.length
+        current = '{:02d}:{:02d}:{:02d} / '.format(*utility.calcPosition(position)) + self.length
         self.lblLength.setText(current)
 
     def durationChanged(self, duration):
-        self.length = '{:02d}:{:02d}:{:02d}'.format(*calcPosition(duration))
+        self.length = '{:02d}:{:02d}:{:02d}'.format(*utility.calcPosition(duration))
         self.lblLength.setText('00:00:00 / ' + self.length)
         self.positionSlider.setRange(0, duration)
 

@@ -157,6 +157,7 @@ class MainWin(QMainWindow):
         self.receivingSensorsData = True
         self.calibrationPageActive = False
         self.musicFiles = []
+        self.dark_theme = False
         self.po = promotions.PowerOption(self.mainPage)
         self.po.shutdown.connect(lambda: self.playShutdown('powerOff'))
         self.po.restart.connect(lambda: self.playShutdown('restart'))
@@ -570,7 +571,7 @@ class MainWin(QMainWindow):
         self.dacSlider.doubleValueChanged.connect(self.setDacSlidrColor)
     
     def setDacSlidrColor(self):
-        if utility.is_dark(self.configs['Theme']):
+        if self.dark_theme:
             self.dacSlider.setStyleSheet(styles.DAC_SLIDER_W_CHANGED)
         else:
             self.dacSlider.setStyleSheet(styles.DAC_SLIDER_B_CHANGED)
@@ -692,7 +693,8 @@ class MainWin(QMainWindow):
     def changeTheme(self, theme):
         incIcon = QIcon()
         decIcon = QIcon()
-        if utility.is_dark(theme):
+        self.dark_theme = utility.is_dark(theme)
+        if self.dark_theme:
             self.sliderEnergyCalib.setStyleSheet(styles.SLIDER_GW)           
             self.sliderFrequencyCalib.setStyleSheet(styles.SLIDER_GW)
             self.sliderPulseWidthCalib.setStyleSheet(styles.SLIDER_DISABLED_GW)
@@ -719,7 +721,7 @@ class MainWin(QMainWindow):
             self.centralWidget().setStyleSheet('background-color: rgb(32, 74, 135)')
 
 
-        if utility.is_dark(theme):
+        if self.dark_theme:
             self.po.setStyleSheet(styles.POWER_OPTION_L)
         else:
             self.po.setStyleSheet(styles.POWER_OPTION_D)
@@ -1538,7 +1540,7 @@ class MainWin(QMainWindow):
                 communication.laserPage({'cooling': self.cooling})
 
     def changeSliderColor(self, c1, c2):
-        if utility.is_dark(self.configs['Theme']):
+        if self.dark_theme:
             self.sliderEnergyCalib.setStyleSheet(c2)
             self.sliderFrequencyCalib.setStyleSheet(c2)             
             self.sliderPulseWidthCalib.setStyleSheet(styles.SLIDER_DISABLED_GW)
