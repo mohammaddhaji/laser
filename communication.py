@@ -474,8 +474,6 @@ def updateCleanup(mountPoint, laserD=''):
         for mp in mountPoint.values():
             if os.path.isfile(f'{mp}/{SOURCE_ZIP}'):
                 shutil.copy(paths.LOGS_PATH, mp)
-                logFile = f'{mp}/{os.path.basename(paths.LOGS_PATH)}'
-                os.rename(logFile, f'{mp}/systemLog')
 
             os.system(f'umount {mp}')
 
