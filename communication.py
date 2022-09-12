@@ -10,8 +10,8 @@ from PyQt5.QtCore import QThread, pyqtSignal
 from crccheck.crc import Crc16Xmodem
 from serial import Serial
 
-from paths import CURRENT_FILE_DIR, LOGS_PATH
-from utility import log, calcMD5, intToBytes
+import paths
+import utility
 try:
     import RPi.GPIO as GPIO
     GPIO.setwarnings(False)
@@ -20,7 +20,7 @@ try:
     GPIO.output(12, GPIO.HIGH)
 except Exception as e:
     if not platform.system() == 'Windows':
-        log('GPIO', str(e) + '\n')
+        utility.log('GPIO', str(e) + '\n')
     
 
 def gpioCleanup():
@@ -28,7 +28,7 @@ def gpioCleanup():
         GPIO.cleanup()
     except Exception as e:
         if not platform.system() == 'Windows': 
-            log('GPIO', str(e) + '\n')
+            utility.log('GPIO', str(e) + '\n')
 
 
 if platform.system() == 'Windows':
@@ -463,7 +463,7 @@ class SerialThread(QThread):
                         buff_idx = buff_idx + 1
             except Exception as e:
                 print(e)
-                log('Serial Unhandled Exception', str(e) + '\n')
+                utility.log('Serial Unhandled Exception', str(e) + '\n')
 
 
 def updateCleanup(mountPoint, laserD=''):
@@ -473,8 +473,8 @@ def updateCleanup(mountPoint, laserD=''):
 
         for mp in mountPoint.values():
             if os.path.isfile(f'{mp}/{SOURCE_ZIP}'):
-                shutil.copy(LOGS_PATH, mp)
-                logFile = f'{mp}/{os.path.basename(LOGS_PATH)}'
+                shutil.copy(paths.LOGS_PATH, mp)
+                logFile = f'{mp}/{os.path.basename(paths.LOGS_PATH)}'
                 os.rename(logFile, f'{mp}/systemLog')
 
             os.system(f'umount {mp}')
@@ -483,7 +483,7 @@ def updateCleanup(mountPoint, laserD=''):
             shutil.rmtree(MOUNT_DIR)
         
     except Exception as e:
-        log('Update Firmware', str(e) + '\n')
+        utility.log('Update Firmware', str(e) + '\n')
 
 
 class UpdateFirmware(QThread):
@@ -510,13 +510,13 @@ class UpdateFirmware(QThread):
             if not sdaFound:
                 err = "Flash drive not found."
                 self.result.emit(err)
-                log('Update Firmware', err + '\n')
+                utility.log('Update Firmware', err + '\n')
                 return
                     
             if not 'children' in sdaBlock:
                 err = "Flash drive doesn't have any partitions."
                 self.result.emit(err)
-                log('Update Firmware', err + '\n')
+                utility.log('Update Firmware', err + '\n')
                 return
 
             if not os.path.isdir(MOUNT_DIR):    
@@ -548,7 +548,7 @@ class UpdateFirmware(QThread):
             if not laserFound:
                 err = "Source files not found."
                 self.result.emit(err)
-                log('Update Firmware', err + '\n')
+                utility.log('Update Firmware', err + '\n')
                 updateCleanup(partitionsDir)
                 return
 
@@ -568,19 +568,19 @@ class UpdateFirmware(QThread):
                     with open(f'{laserDir}/{VERIFY}', 'r') as f:
                         md5 = int(f.read())
 
-                    if not md5 == calcMD5(laserDir, f'{VERIFY}'):
+                    if not md5 == utility.calcMD5(laserDir, f'{VERIFY}'):
                         self.result.emit(verifyError)
-                        log('Update Firmware', verifyError + '\n')
+                        utility.log('Update Firmware', verifyError + '\n')
                         updateCleanup(partitionsDir, laserD=laserDir)
                         return
 
                 except Exception as e:
                     self.result.emit(verifyError)
-                    log('Update Firmware', str(e) + '\n')
+                    utility.log('Update Firmware', str(e) + '\n')
                     updateCleanup(partitionsDir, laserD=laserDir)
                     return
 
-                os.system(f'cp -r {laserDir}/* {CURRENT_FILE_DIR}')
+                os.system(f'cp -r {laserDir}/* {paths.CURRENT_FILE_DIR}')
                 updateCleanup(partitionsDir, laserD=laserDir)
                 self.result.emit("Done GUI")
 
@@ -592,8 +592,8 @@ class UpdateFirmware(QThread):
                     segment = data[i : i + PACKET_NOB]                
                     MICRO_DATA[field] = buildPacket(segment, UPDATE_PAGE, field, REPORT)
                 
-                MICRO_DATA[250] = buildPacket(intToBytes(len(data)), UPDATE_PAGE, 250, REPORT)
-                MICRO_DATA[251] = buildPacket(intToBytes(PACKET_NOB), UPDATE_PAGE, 251, REPORT)
+                MICRO_DATA[250] = buildPacket(utility.intToBytes(len(data)), UPDATE_PAGE, 250, REPORT)
+                MICRO_DATA[251] = buildPacket(utility.intToBytes(PACKET_NOB), UPDATE_PAGE, 251, REPORT)
 
                 enterPage(UPDATE_PAGE)
 
@@ -606,4 +606,4 @@ class UpdateFirmware(QThread):
         except Exception as e:
             self.result.emit('Operation failed. Please restart and try again.')
             updateCleanup(partitionsDir, laserD=laserDir)
-            log('Update Firmware, Unhandled Exception', str(e) + '\n')
+            utility.log('Update Firmware, Unhandled Exception', str(e) + '\n')
