@@ -1,6 +1,5 @@
 import pathlib
 import jdatetime
-import hashlib
 import pickle
 import time 
 import math
@@ -112,7 +111,7 @@ class MainWin(QMainWindow):
         self.lblSplash.setGeometry(0, 0, 1920, 1080)
         self.lblSplash.setPixmap(QPixmap(paths.SPLASH).scaled(1920,1080))
         self.lblSplash.clicked.connect(lambda: self.changeAnimation('vertical'))
-        self.lblSplash.clicked.connect(self.onSplashClicked)
+        self.lblSplash.clicked.connect(lambda: self.stackedWidget.setCurrentWidget(self.mainPage))
         font_db = QFontDatabase()
         font_id = font_db.addApplicationFont(paths.IRAN_NASTALIQ)
         font_id = font_db.addApplicationFont(paths.IRANIAN_SANS)
@@ -228,8 +227,6 @@ class MainWin(QMainWindow):
         mixer.Channel(0).set_volume(0.5)
         mixer.Channel(0).play(mixer.Sound(paths.STARTUP_SOUND))
 
-    def onSplashClicked(self):
-        self.stackedWidget.setCurrentWidget(self.mainPage) 
     
     def setTouchSound(self, active):
         self.configs['TouchSound'] = active
@@ -281,14 +278,14 @@ class MainWin(QMainWindow):
         self.monitorReceivingSensors = QTimer()
         self.sparkTimer = QTimer()
         self.loadUsersTimer = QTimer()
-        self.shutdownTimer = QTimer()
+        self.powerOffTimer = QTimer()
         self.restartTimer = QTimer()
         self.keyboardTimer = QTimer()
         self.messageTimer = QTimer()
         self.messageTimer.timeout.connect(self.clearMessageLabel)
         self.keyboardTimer.timeout.connect(lambda: self.setKeyboard('hide'))
-        self.shutdownTimer.timeout.connect(self.powerOff)
-        self.restartTimer.timeout.connect(self.restart)
+        self.powerOffTimer.timeout.connect(lambda: self.powerOff())
+        self.restartTimer.timeout.connect(lambda: self.powerOff(restart=True))
         self.loadUsersTimer.timeout.connect(self.addUsersTable)
         self.loadUsersTimer.start(20)
         self.systemTimeTimer.timeout.connect(self.updateSystemTime)
@@ -408,6 +405,7 @@ class MainWin(QMainWindow):
         self.btnStandByCalib.clicked.connect(lambda: self.setReady(False))
         self.btnUUIDEnter.clicked.connect(self.unlockUUID)
         self.btnHwinfo.clicked.connect(lambda: self.hwStackedWidget.setCurrentWidget(self.infoPage))
+        self.btnHwinfo.clicked.connect(self.readHwInfo)
         self.btnHwinfo.clicked.connect(lambda: self.enterSettingPage(communication.REPORT))
         self.btnSystemLock.clicked.connect(lambda: self.hwStackedWidget.setCurrentWidget(self.lockSettingsPage))
         self.btnSystemLock.clicked.connect(self.hwPageChanged)
@@ -775,7 +773,7 @@ class MainWin(QMainWindow):
         self.musicSound.stop()
         self.setKeyboard('hide')
         if i == 'powerOff':
-            self.shutdownTimer.start(3000)
+            self.powerOffTimer.start(3000)
         else:
             self.restartTimer.start(3000)
             self.lblShuttingdown.setText('Restarting...')
@@ -791,23 +789,14 @@ class MainWin(QMainWindow):
         communication.gpioCleanup()
         self.close()
 
-    def powerOff(self):
+    def powerOff(self, restart=False):
         communication.enterPage(communication.SHUTDONW_PAGE)
         self.serialC.closePort()
         communication.gpioCleanup()
         if utility.platform.system() == 'Windows':
             self.close()
         else:
-            os.system('poweroff')
-        
-    def restart(self):
-        communication.enterPage(communication.SHUTDONW_PAGE)
-        self.serialC.closePort()
-        communication.gpioCleanup()
-        if utility.platform.system() == 'Windows':
-            self.close()
-        else:
-            os.system('reboot')
+            os.system('reboot' if restart else 'poweroff')
 
     def updateGuiResult(self, result):
         if result == 'Done GUI':
@@ -834,13 +823,19 @@ class MainWin(QMainWindow):
         self.updateT.start()
 
     def shot(self):
-        self.currentCounter += 1
-        self.counterWidget.setValue(self.currentCounter)
-        self.sparkTimer.start(1000//self.frequency + 100)
-        self.lblSpark.setVisible(True)
-        self.lblLasing.setVisible(True)
-        if not self.laserNoUser:
-            self.user.incShot(self.bodyPart)
+        index = self.stackedWidget.indexOf(self.laserMainPage)
+        if self.stackedWidget.currentIndex() == index:
+            self.currentCounter += 1
+            self.counterWidget.setValue(self.currentCounter)
+            self.sparkTimer.start(1000//self.frequency + 100)
+            self.lblSpark.setVisible(True)
+            self.lblLasing.setVisible(True)
+            if not self.laserNoUser:
+                self.user.incShot(self.bodyPart)
+
+        else:
+            self.configs['TotalShotCounter'] += 1
+            self.configs['TotalShotCounterAdmin'] += 1
 
     def hideSpark(self):
         self.sparkTimer.stop()
@@ -955,7 +950,7 @@ class MainWin(QMainWindow):
         hwid = utility.getID()
         hwid += '@mohammaad_haji'
         
-        if hashlib.sha256(hwid.encode()).hexdigest()[:10].upper() == user_pass:
+        if utility.sha256(hwid) == user_pass:
             index = self.stackedWidgetLock.indexOf(self.enterLaserPage)
             self.stackedWidgetLock.setCurrentIndex(index)
             
@@ -978,7 +973,7 @@ class MainWin(QMainWindow):
             with open(paths.COPY_RIGHT_PASS, 'r') as f:
                 password = f.read()
 
-        if not hashlib.sha256(hwid.encode()).hexdigest()[:10].upper() == password:
+        if not utility.sha256(hwid) == password:
             index = self.stackedWidgetLock.indexOf(self.copyRightPage)
             self.stackedWidgetLock.setCurrentIndex(index)
 
@@ -1474,7 +1469,6 @@ class MainWin(QMainWindow):
                 self.setMessageLabel(lang.TEXT['SensorError'][self.langIndex], 2)
                 utility.log('Sensors', logErrors)
 
-            
             else:
                 self.ready = True
                 index = self.stackedWidget.indexOf(self.laserMainPage)
@@ -1611,9 +1605,7 @@ class MainWin(QMainWindow):
     
     def saveCase(self):
         caseObj = case.openCase(self.case)
-        caseObj.save(
-            self.sex, self.bodyPart, (self.energy, self.pulseWidth, self.frequency)
-        )
+        caseObj.save(self.sex, self.bodyPart, (self.energy, self.pulseWidth, self.frequency))
         self.setMessageLabel(lang.TEXT['saved'][self.langIndex], 1.5)
 
     def bodyPartsSignals(self):
@@ -1685,7 +1677,8 @@ class MainWin(QMainWindow):
 
     def backSettings(self):
         self.showHwPassInput('hide')
-        self.showResetCounterPassInput('hide') 
+        self.showResetCounterPassInput('hide')
+        self.showResetCounterConfirm('hide')
         index = self.stackedWidgetSettings.indexOf(self.settingsMenuPage)
         if self.stackedWidgetSettings.currentIndex() == index:
             self.stackedWidget.setCurrentWidget(self.mainPage)
@@ -1694,9 +1687,10 @@ class MainWin(QMainWindow):
             self.stackedWidgetSettings.setCurrentWidget(self.settingsMenuPage)
             self.hWPage.setVisible(False)
             self.uiPage.setVisible(False)
+            self.saveConfigs()
             if self.ready:
                 self.setReady(False)
-            communication.enterPage(communication.OTHER_PAGE) 
+            communication.enterPage(communication.OTHER_PAGE)
 
     def searchUsers(self):
         name = self.txtSearchUsers.text().lower()

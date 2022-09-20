@@ -130,6 +130,7 @@ TEXT = {
     'systemTimeStatusError': ['Could not set system time.', 'زمان سیستم تنظیم نشد.'],
     'systemTimeStatus': ['Time updated successfully.', 'زمان با موفقیت تنظیم شد.'],
     'btnResetCounter': ['Reset Counter', 'ریست شمارنده'],
+    'btnResetCounter2': ['Reset', 'ریست'],
     'lblProducion': ['Production', 'تولید'],
     'lblLaser': ['Laser', 'لیزر'],
     'lblDriver': ['Driver', 'درایور'],

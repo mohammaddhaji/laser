@@ -471,3 +471,7 @@ def is_dark(photo):
         return avg < 127
     else:
         return False
+
+    
+def sha256(x):
+    return hashlib.sha256(x.encode()).hexdigest()[:10].upper()
