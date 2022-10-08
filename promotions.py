@@ -1869,13 +1869,7 @@ class Player(QFrame):
         self.verticalLayout.setObjectName("verticalLayout")
         self.topFrame = QFrame(self)
         self.topFrame.setMaximumSize(QSize(16777215, 0))
-        self.topFrame.setStyleSheet("""
-            QFrame{
-                background-color: rgb(5, 0, 48);
-                border-top-left-radius: 10px;
-	            border-top-right-radius: 10px;
-            }
-        """)
+        self.topFrame.setStyleSheet("QFrame{background-color: rgb(5, 0, 48);}")
         self.topFrame.setFrameShape(QFrame.StyledPanel)
         self.topFrame.setFrameShadow(QFrame.Raised)
         self.topFrame.setObjectName("topFrame")

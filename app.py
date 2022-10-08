@@ -336,7 +336,6 @@ class MainWin(QMainWindow):
         self.btnBackMusic.clicked.connect(lambda: self.musicPage.setVisible(False))
         self.btnBackNewSession.clicked.connect(lambda: self.stackedWidget.setCurrentWidget(self.mainPage))
         self.btnBackManagement.clicked.connect(lambda: self.stackedWidget.setCurrentWidget(self.mainPage))
-        self.btnBackManagement.clicked.connect(lambda: self.txtSearchUsers.clear())
         self.btnBackManagement.clicked.connect(self.saveUsers)
         self.btnBackSettings.clicked.connect(self.backSettings)
         self.btnBackSettings.clicked.connect(self.systemTimeTimer.stop)
