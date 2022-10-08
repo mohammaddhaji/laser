@@ -57,7 +57,7 @@ $ sudo apt-get update
 $ sudo apt install gstreamer1.0-libav gstreamer1.0-plugins-bad gstreamer1.0-plugins-good gstreamer1.0-plugins-ugly pulseaudio gstreamer1.0-alsa libgl1-mesa-dev libglu1-mesa-dev edid-decode
 $ sudo pip3 install jdatetime pyserial crccheck pygame nuitka Werkzeug
 
-$ git clone --depth=1 https://mohammaadhaji@bitbucket.org/mohammaadhaji/laser.git
+$ git clone --depth=1 https://github.com/mohammaddhaji/laser.git
 
 #################################################################################
 Step 5 --
@@ -131,7 +131,7 @@ Add following commands after if statement:
 
 cd /path/to/app.py; e.g. cd /home/pi/Laser;
 export QT_QPA_EGLFS_HIDECURSOR=1
-sudo python app.py -platform eglfs --no-sandbox 2> Errors.txt
+sudo python app.py -platform linuxfb 2> Errors.txt
 
 #################################################################################
 Step 10 -- 
